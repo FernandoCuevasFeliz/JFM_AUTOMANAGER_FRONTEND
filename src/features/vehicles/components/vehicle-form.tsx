@@ -1,7 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { ArrowUpRight } from 'lucide-react';
 import * as React from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FormField, FormRow, FormSection, fieldAria } from '@/components/form-field';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -31,6 +32,28 @@ import type { Vehicle } from '../types';
 /** Valores libres frecuentes; el backend los acepta como texto de 20 caracteres. */
 const TRANSMISSION_OPTIONS = ['automatica', 'manual', 'cvt'];
 const FUEL_OPTIONS = ['gasolina', 'diesel', 'hibrido', 'electrico', 'gas'];
+
+/**
+ * Aviso con salida a Catalogos.
+ *
+ * Un vehiculo exige marca y modelo, y ambos son catalogos aparte. Sin este
+ * enlace, quien llega con la base recien instalada se topa con un desplegable
+ * vacio y ninguna pista de que hacer.
+ */
+function CatalogHint({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+      {children}
+      <Link
+        to="/catalogs"
+        className="inline-flex items-center gap-0.5 font-medium text-primary hover:underline"
+      >
+        Ir a Catalogos
+        <ArrowUpRight className="size-3" />
+      </Link>
+    </p>
+  );
+}
 
 interface VehicleFormProps {
   /** Si viene, el formulario edita; si no, crea. */
@@ -93,6 +116,11 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
   const brands = brandsQuery.data ?? [];
   const models = brandId ? (modelsQuery.data ?? []) : [];
 
+  // Sin marcas (o sin modelos de la marca elegida) el formulario es un callejon
+  // sin salida: hay que decir donde se dan de alta, no solo dejar el select vacio.
+  const noBrands = !brandsQuery.isLoading && brands.length === 0;
+  const noModels = Boolean(brandId) && !modelsQuery.isLoading && models.length === 0;
+
   // Cambiar de marca invalida el modelo elegido.
   const previousBrandRef = React.useRef(brandId);
   React.useEffect(() => {
@@ -135,7 +163,9 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
       }
 
       const created = await createVehicle.mutateAsync(values);
-      navigate(`/vehicles/${created.id}`);
+      // Las fotos solo se pueden colgar de un vehiculo que ya existe
+      // (`POST /vehicles/:id/images`), asi que se abre su pestana al llegar.
+      navigate(`/vehicles/${created.id}?tab=imagenes`);
     } catch (error) {
       handleFormError(error, setError, { knownFields: VEHICLE_FORM_FIELDS });
     }
@@ -152,9 +182,21 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                   control={control}
                   name="brandId"
                   render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange} disabled={brandsQuery.isLoading}>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={brandsQuery.isLoading || noBrands}
+                    >
                       <SelectTrigger id="brandId" aria-invalid={errors.brandId ? true : undefined}>
-                        <SelectValue placeholder={brandsQuery.isLoading ? 'Cargando…' : 'Selecciona una marca'} />
+                        <SelectValue
+                          placeholder={
+                            brandsQuery.isLoading
+                              ? 'Cargando…'
+                              : noBrands
+                                ? 'No hay marcas registradas'
+                                : 'Selecciona una marca'
+                          }
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         {brands.map((brand) => (
@@ -166,6 +208,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                     </Select>
                   )}
                 />
+                {noBrands && <CatalogHint>Da de alta la primera marca en Catalogos.</CatalogHint>}
               </FormField>
 
               <FormField
@@ -173,7 +216,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                 htmlFor="modelId"
                 error={errors.modelId}
                 required
-                hint={!brandId ? 'Selecciona primero una marca' : undefined}
+                hint={!brandId && !noBrands ? 'Selecciona primero una marca' : undefined}
               >
                 <Controller
                   control={control}
@@ -182,10 +225,18 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                     <Select
                       value={field.value}
                       onValueChange={field.onChange}
-                      disabled={!brandId || modelsQuery.isLoading}
+                      disabled={!brandId || modelsQuery.isLoading || noModels}
                     >
                       <SelectTrigger id="modelId" aria-invalid={errors.modelId ? true : undefined}>
-                        <SelectValue placeholder={modelsQuery.isLoading ? 'Cargando…' : 'Selecciona un modelo'} />
+                        <SelectValue
+                          placeholder={
+                            modelsQuery.isLoading
+                              ? 'Cargando…'
+                              : noModels
+                                ? 'Esta marca no tiene modelos'
+                                : 'Selecciona un modelo'
+                          }
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         {models.map((model) => (
@@ -197,6 +248,7 @@ export function VehicleForm({ vehicle }: VehicleFormProps) {
                     </Select>
                   )}
                 />
+                {noModels && <CatalogHint>Agrega un modelo a esta marca en Catalogos.</CatalogHint>}
               </FormField>
 
               <FormField label="Ano" htmlFor="year" error={errors.year} required>

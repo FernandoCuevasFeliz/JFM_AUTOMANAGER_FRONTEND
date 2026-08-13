@@ -13,8 +13,10 @@ import { EmptyState } from '@/components/states';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { api } from '@/lib/api-client';
 import {
   IMAGEKIT_AUTH_ENDPOINT,
+  IMAGEKIT_AUTH_IS_INTERNAL,
   IMAGEKIT_PUBLIC_KEY,
   IMAGEKIT_UPLOAD_ENABLED,
 } from '@/lib/env';
@@ -46,7 +48,19 @@ interface AuthParams {
   publicKey?: string;
 }
 
+/**
+ * Pide los parametros de firma.
+ *
+ * Si el endpoint vive en el backend de JFM (`/uploads/imagekit-auth`) se usa el
+ * cliente HTTP: la ruta exige `vehicles:write`, asi que necesita el `Bearer` y
+ * se beneficia del interceptor de refresco. Un endpoint externo se pide con un
+ * `fetch` normal, porque no comparte la sesion.
+ */
 async function fetchUploadAuth(): Promise<AuthParams> {
+  if (IMAGEKIT_AUTH_IS_INTERNAL) {
+    return api.get<AuthParams>(IMAGEKIT_AUTH_ENDPOINT);
+  }
+
   const response = await fetch(IMAGEKIT_AUTH_ENDPOINT);
   if (!response.ok) {
     throw new Error(`El servicio de firma respondio ${response.status}`);
@@ -82,10 +96,19 @@ export function VehicleImagesUploader({
         setProgress(0);
         const auth = await fetchUploadAuth();
 
+        // La clave publica puede venir del endpoint de firma o del entorno del
+        // frontend; sin una de las dos ImageKit no sabe a que cuenta subir.
+        const publicKey = auth.publicKey ?? IMAGEKIT_PUBLIC_KEY;
+        if (!publicKey) {
+          throw new Error(
+            'Falta la clave publica de ImageKit: configurala en el servidor (IMAGEKIT_PUBLIC_KEY) o en VITE_IMAGEKIT_PUBLIC_KEY',
+          );
+        }
+
         const result = await upload({
           file,
           fileName: file.name,
-          publicKey: auth.publicKey ?? IMAGEKIT_PUBLIC_KEY,
+          publicKey,
           signature: auth.signature,
           expire: auth.expire,
           token: auth.token,

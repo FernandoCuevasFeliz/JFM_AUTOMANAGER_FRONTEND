@@ -1,6 +1,6 @@
 import { Pencil, RefreshCcw, Trash2 } from 'lucide-react';
 import * as React from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { PageHeader } from '@/components/page-header';
 import { DetailSkeleton, ErrorState } from '@/components/states';
@@ -27,6 +27,11 @@ export function VehicleDetailPage() {
 
   const [statusOpen, setStatusOpen] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
+
+  // `?tab=imagenes` permite enlazar directo a la galeria; es como llega el
+  // formulario despues de registrar un vehiculo nuevo.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') ?? 'ficha';
 
   if (vehicleQuery.isLoading) return <DetailSkeleton />;
 
@@ -79,7 +84,12 @@ export function VehicleDetailPage() {
         )}
       </div>
 
-      <Tabs defaultValue="ficha">
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) =>
+          setSearchParams(value === 'ficha' ? {} : { tab: value }, { replace: true })
+        }
+      >
         <TabsList>
           <TabsTrigger value="ficha">Ficha</TabsTrigger>
           <TabsTrigger value="imagenes">Imagenes</TabsTrigger>

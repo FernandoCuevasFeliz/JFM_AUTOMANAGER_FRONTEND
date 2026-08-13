@@ -65,12 +65,15 @@ Todas llevan el prefijo `VITE_` porque Vite solo expone al navegador las que lo 
 | Variable | Obligatoria | Descripcion |
 |---|:--:|---|
 | `VITE_API_URL` | si | URL base de la API, con el prefijo de version. Por defecto `http://localhost:3000/api/v1`. |
-| `VITE_IMAGEKIT_PUBLIC_KEY` | no | Clave **publica** de ImageKit. Es publica por diseno. |
+| `VITE_IMAGEKIT_PUBLIC_KEY` | no | Clave **publica** de ImageKit. Puede omitirse si el endpoint de firma ya la devuelve. |
 | `VITE_IMAGEKIT_URL_ENDPOINT` | no | URL-endpoint de entrega de ImageKit (`https://ik.imagekit.io/tu_cuenta`). |
 | `VITE_IMAGEKIT_AUTH_ENDPOINT` | no | Endpoint que **firma** las subidas. Ver [Subida de imagenes](#subida-de-imagenes-con-imagekit). |
 
-Si las tres variables de ImageKit quedan vacias, la galeria de vehiculos sigue funcionando en modo
+Si las variables de ImageKit quedan vacias, la galeria de vehiculos sigue funcionando en modo
 **"pegar URL"**: se registra la direccion de una imagen ya alojada. Nada mas se degrada.
+
+> Nunca pongas la clave **privada** de ImageKit en un `VITE_*`: Vite incrusta esas variables en el
+> JavaScript que descarga el navegador, asi que quedaria publica. Va en el `.env` del backend.
 
 ---
 
@@ -248,20 +251,44 @@ si no hay campo al que atribuirlo, cae al toast. Ningun componente repite el `sw
 El backend **no recibe archivos**: solo guarda la URL en `vehicle_images.url` (§5.4 de `API.md`). El
 archivo se sube desde el navegador a ImageKit y aqui se registra la URL resultante.
 
-**Importante:** la subida directa desde el navegador exige `signature`, `token` y `expire` firmados
-con la clave **privada** de ImageKit, que no puede viajar al cliente. Eso requiere un endpoint de
-firma, y **el backend de JFM AutoManager no lo expone a proposito**. Hay que hospedarlo aparte; una
-funcion serverless de unas pocas lineas basta. Debe responder:
+Esa subida directa exige `signature`, `token` y `expire` calculados con la clave **privada** de
+ImageKit, que no puede viajar al navegador. De eso se encarga `GET /uploads/imagekit-auth` en el
+backend (§5.12 de `API.md`), protegido con `vehicles:write`.
 
-```json
-{ "signature": "…", "expire": 1735689600, "token": "…" }
-```
+### Puesta en marcha
 
-Su URL se configura en `VITE_IMAGEKIT_AUTH_ENDPOINT`.
+1. En el `.env` del **backend**, con las claves del panel de ImageKit
+   (*Developer options → API keys*):
 
-Mientras no exista, `VehicleImagesUploader` detecta que falta la configuracion y cae al modo
-**"pegar URL"**: el usuario registra la direccion de una imagen ya alojada y todo lo demas
-(portada, orden, borrado) sigue funcionando igual.
+   ```bash
+   IMAGEKIT_PRIVATE_KEY=private_xxxxxxxxxxxxxxxxxxxx
+   IMAGEKIT_PUBLIC_KEY=public_xxxxxxxxxxxxxxxxxxxxxx
+   ```
+
+2. En el `.env` de **este** proyecto:
+
+   ```bash
+   VITE_IMAGEKIT_AUTH_ENDPOINT=/uploads/imagekit-auth
+   VITE_IMAGEKIT_URL_ENDPOINT=https://ik.imagekit.io/tu_cuenta
+   ```
+
+Con eso el boton "Subir imagenes" queda activo.
+
+### Las dos formas del endpoint
+
+`VITE_IMAGEKIT_AUTH_ENDPOINT` admite dos valores y el uploader los distingue solo:
+
+- **Empieza por `/`** → ruta del backend de JFM. Se pide con el cliente HTTP, asi que lleva el
+  `Bearer` y pasa por el interceptor de refresco. Es lo que necesita la ruta, que exige
+  `vehicles:write`.
+- **URL absoluta** → servicio externo (una funcion serverless propia). Se pide con un `fetch`
+  normal, porque no comparte la sesion; protegerlo queda de tu lado.
+
+Si la variable esta vacia, el uploader cae al modo **"pegar URL"**: se registra la direccion de una
+imagen ya alojada y todo lo demas (portada, orden, borrado) funciona igual.
+
+La firma se pide **justo antes de cada subida** y nunca se guarda: es de un solo uso y caduca a los
+40 minutos.
 
 ---
 
