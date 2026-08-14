@@ -1,8 +1,17 @@
-import { ChevronDown, KeyRound, Loader2, LogOut, Menu, MonitorSmartphone, X } from 'lucide-react';
+import {
+  ChevronDown,
+  KeyRound,
+  Loader2,
+  LogOut,
+  Menu,
+  MonitorSmartphone,
+  Moon,
+  Sun,
+  X,
+} from 'lucide-react';
 import * as React from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,23 +21,41 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/features/auth/use-auth';
+import { useTheme } from '@/lib/use-theme';
 import { cn } from '@/lib/utils';
 import { BRAND_ICON, NAV_GROUPS } from './sidebar-nav';
 
 /**
  * Marco de la aplicacion: sidebar fijo en escritorio, cajon deslizante en
  * movil, topbar con el usuario y `<Outlet/>` para el modulo activo.
+ *
+ * El sidebar es grafito oscuro en los dos temas. Es deliberado: fija el ancla
+ * visual del producto y deja que el area de trabajo —donde de verdad se leen
+ * datos— se quede con todo el contraste disponible.
  */
 export function AppShell() {
   const { user, logout, can } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme, toggleTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
   // Navegar cierra el cajon: en movil queda tapando el contenido.
   React.useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
+
+  // Escape cierra el cajon: es lo que espera cualquiera que lo abra sin querer.
+  React.useEffect(() => {
+    if (!mobileOpen) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setMobileOpen(false);
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [mobileOpen]);
 
   const groups = React.useMemo(
     () =>
@@ -38,6 +65,16 @@ export function AppShell() {
       })).filter((group) => group.items.length > 0),
     [can],
   );
+
+  // Titulo del modulo activo: orienta sin obligar a mirar el sidebar.
+  const currentSection = React.useMemo(() => {
+    const items = groups.flatMap((group) => group.items);
+    const matches = items.filter((item) =>
+      item.end ? location.pathname === item.to : location.pathname.startsWith(item.to),
+    );
+    // Con `/vehicles` y `/vehicles/new` gana la ruta mas especifica.
+    return matches.sort((a, b) => b.to.length - a.to.length)[0];
+  }, [groups, location.pathname]);
 
   const initials = user
     ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()
@@ -49,11 +86,11 @@ export function AppShell() {
   }
 
   return (
-    <div className="min-h-dvh bg-muted/40">
+    <div className="min-h-dvh bg-background">
       {/* Fondo oscuro del cajon en movil */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-950/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-[2px] lg:hidden"
           onClick={() => setMobileOpen(false)}
           aria-hidden
         />
@@ -61,38 +98,41 @@ export function AppShell() {
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-sidebar-border bg-sidebar transition-transform lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col bg-sidebar',
+          'transition-transform duration-250 ease-out lg:translate-x-0',
+          // Al papel solo va el documento, nunca el cromo de la aplicacion.
+          'print:hidden',
           mobileOpen ? 'translate-x-0' : '-translate-x-full',
         )}
+        aria-label="Navegacion principal"
       >
         <div className="flex h-14 items-center justify-between gap-2 border-b border-sidebar-border px-4">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <BRAND_ICON className="size-4.5" />
-            </div>
-            <div className="flex flex-col leading-none">
-              <span className="text-sm font-semibold">JFM AutoManager</span>
-              <span className="text-[11px] text-muted-foreground">EJGH AUTO IMPORT</span>
-            </div>
+          <Link to="/" className="group flex items-center gap-2.5 rounded-md">
+            <span className="flex size-8 items-center justify-center rounded-md bg-signal text-signal-foreground shadow-xs">
+              <BRAND_ICON className="size-4.5" aria-hidden />
+            </span>
+            <span className="flex flex-col leading-none">
+              <span className="text-[15px] font-bold tracking-tight text-sidebar-accent-foreground">
+                JFM<span className="font-normal text-sidebar-foreground"> AutoManager</span>
+              </span>
+              <span className="label-micro mt-1 text-sidebar-muted">EJGH Auto Import</span>
+            </span>
           </Link>
 
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="lg:hidden"
+          <button
+            type="button"
+            className="hit-target flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground lg:hidden"
             onClick={() => setMobileOpen(false)}
             aria-label="Cerrar menu"
           >
-            <X />
-          </Button>
+            <X className="size-4" />
+          </button>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           {groups.map((group) => (
             <div key={group.label} className="mb-5 last:mb-0">
-              <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {group.label}
-              </p>
+              <p className="label-micro mb-1.5 px-3 text-sidebar-muted">{group.label}</p>
               <ul className="flex flex-col gap-0.5">
                 {group.items.map((item) => (
                   <li key={item.to}>
@@ -101,14 +141,19 @@ export function AppShell() {
                       end={item.end}
                       className={({ isActive }) =>
                         cn(
-                          'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                          'relative flex h-9 items-center gap-3 rounded-md pl-4 pr-3 text-[13.5px] font-medium',
+                          'transition-colors duration-150',
+                          // Riel rojo de 3px: marca la posicion sin depender solo
+                          // del relleno, que en oscuro se lee muy debil.
+                          'before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px]',
+                          'before:-translate-y-1/2 before:rounded-r-full before:transition-colors',
                           isActive
-                            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                            : 'text-sidebar-foreground hover:bg-sidebar-accent/60',
+                            ? 'bg-sidebar-accent text-sidebar-accent-foreground before:bg-signal'
+                            : 'text-sidebar-foreground before:bg-transparent hover:bg-sidebar-accent/55 hover:text-sidebar-accent-foreground',
                         )
                       }
                     >
-                      <item.icon className="size-4 shrink-0" />
+                      <item.icon className="size-4 shrink-0" aria-hidden />
                       {item.label}
                     </NavLink>
                   </li>
@@ -119,47 +164,59 @@ export function AppShell() {
         </nav>
 
         <div className="border-t border-sidebar-border px-4 py-3">
-          <p className="text-[11px] text-muted-foreground">JFM AutoManager v1.0</p>
+          <p className="label-micro text-sidebar-muted">JFM AutoManager · v1.0</p>
         </div>
       </aside>
 
-      <div className="lg:pl-64">
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b border-border bg-background/85 px-4 backdrop-blur sm:px-6">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="lg:hidden"
+      <div className="lg:pl-[264px] print:pl-0">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-md sm:px-6 print:hidden">
+          <button
+            type="button"
+            className="hit-target flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground lg:hidden"
             onClick={() => setMobileOpen(true)}
             aria-label="Abrir menu"
           >
-            <Menu />
-          </Button>
+            <Menu className="size-4.5" />
+          </button>
 
-          <div className="ml-auto">
+          {currentSection && (
+            <p className="truncate text-sm font-semibold tracking-tight">{currentSection.label}</p>
+          )}
+
+          <div className="ml-auto flex items-center gap-1">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="hit-target flex size-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              aria-label={theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+            >
+              {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
+            </button>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent">
+                <button className="hit-target flex cursor-pointer items-center gap-2 rounded-md py-1 pl-1 pr-2 text-left transition-colors hover:bg-accent">
                   <Avatar>
                     <AvatarFallback>{initials}</AvatarFallback>
                   </Avatar>
-                  <div className="hidden flex-col leading-tight sm:flex">
-                    <span className="text-sm font-medium">
+                  <span className="hidden flex-col leading-tight sm:flex">
+                    <span className="text-[13px] font-medium">
                       {user?.firstName} {user?.lastName}
                     </span>
-                    <span className="text-xs capitalize text-muted-foreground">{user?.roleName}</span>
-                  </div>
-                  <ChevronDown className="size-4 text-muted-foreground" />
+                    <span className="label-micro text-muted-foreground">{user?.roleName}</span>
+                  </span>
+                  <ChevronDown className="size-3.5 text-muted-foreground" aria-hidden />
                 </button>
               </DropdownMenuTrigger>
 
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-60">
                 <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col gap-0.5">
+                  <span className="flex flex-col gap-0.5">
                     <span className="text-sm font-medium">
                       {user?.firstName} {user?.lastName}
                     </span>
                     <span className="truncate text-xs text-muted-foreground">{user?.email}</span>
-                  </div>
+                  </span>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
 
@@ -186,7 +243,7 @@ export function AppShell() {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8">
+        <main className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8 print:max-w-none print:p-0">
           {/* Cada modulo llega en su propio chunk: ver `router.tsx`. */}
           <React.Suspense fallback={<RouteFallback />}>
             <Outlet />
@@ -201,7 +258,7 @@ export function AppShell() {
 function RouteFallback() {
   return (
     <div className="flex min-h-[50vh] items-center justify-center">
-      <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      <Loader2 className="size-6 animate-spin text-muted-foreground" aria-label="Cargando" />
     </div>
   );
 }

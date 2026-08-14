@@ -35,6 +35,7 @@ const ReservationsListPage = lazyPage(() => import('@/features/reservations/page
 const SalesListPage = lazyPage(() => import('@/features/sales/pages/sales-list-page'), 'SalesListPage');
 const SaleDetailPage = lazyPage(() => import('@/features/sales/pages/sale-detail-page'), 'SaleDetailPage');
 const SaleNewPage = lazyPage(() => import('@/features/sales/pages/sale-new-page'), 'SaleNewPage');
+const InvoicePage = lazyPage(() => import('@/features/billing/pages/invoice-page'), 'InvoicePage');
 const CatalogsPage = lazyPage(() => import('@/features/catalogs/pages/catalogs-page'), 'CatalogsPage');
 const UsersListPage = lazyPage(() => import('@/features/users/pages/users-list-page'), 'UsersListPage');
 const ChangePasswordPage = lazyPage(() => import('@/features/auth/pages/change-password-page'), 'ChangePasswordPage');
@@ -133,6 +134,9 @@ export const router = createBrowserRouter([
             children: [
               { path: 'sales', element: <SalesListPage /> },
               { path: 'sales/:id', element: <SaleDetailPage /> },
+              // La factura es una vista de la venta, no un recurso aparte: la
+              // protege el mismo permiso y cuelga de la misma ruta.
+              { path: 'sales/:id/invoice', element: <InvoicePage /> },
             ],
           },
           {

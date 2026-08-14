@@ -112,9 +112,9 @@ export function ReservationsListPage() {
                 <span
                   className={
                     days < 0
-                      ? 'text-xs text-destructive'
+                      ? 'text-xs text-danger'
                       : days <= 3
-                        ? 'text-xs text-amber-600'
+                        ? 'text-xs text-warning'
                         : 'text-xs text-muted-foreground'
                   }
                 >

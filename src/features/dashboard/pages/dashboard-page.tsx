@@ -26,7 +26,24 @@ import { useVehiclesSummary } from '@/features/vehicles/hooks';
 import { formatCivilMonth } from '@/lib/dates';
 import { formatMoney, formatMoneyCompact, formatNumber } from '@/lib/money';
 import { VEHICLE_STATUS_META, type VehicleStatus } from '@/lib/status';
+import { cn } from '@/lib/utils';
 import { useMonthlySales } from '../hooks';
+
+/**
+ * Estilo unico de los tooltips de recharts, para no repetirlo en cada grafica.
+ * La sombra va literal: `@theme inline` incrusta `--shadow-pop` en la utilidad
+ * `shadow-pop` y no lo publica como custom property en tiempo de ejecucion.
+ */
+const TOOLTIP_STYLE = {
+  backgroundColor: 'var(--popover)',
+  border: '1px solid var(--border)',
+  borderRadius: 10,
+  boxShadow: '0 10px 30px -8px oklch(0.21 0.04 265 / 0.18), 0 2px 8px -2px oklch(0.21 0.04 265 / 0.08)',
+  fontSize: 13,
+  padding: '8px 10px',
+} as const;
+
+const AXIS_TICK = { fontSize: 11, fill: 'var(--muted-foreground)' } as const;
 
 /** Colores del tema, para que las graficas hablen el mismo idioma que la UI. */
 const CHART_COLORS = [
@@ -37,12 +54,19 @@ const CHART_COLORS = [
   'var(--chart-5)',
 ];
 
+/**
+ * Color de cada estado en las graficas.
+ *
+ * Sigue el mismo tono que el badge del estado en `lib/status.ts`: si en la tabla
+ * "Reservado" es ambar, en el donut tiene que ser ambar. Un mismo estado con dos
+ * colores obliga a leer la leyenda en cada vistazo.
+ */
 const STATUS_COLORS: Record<VehicleStatus, string> = {
-  in_transit: 'var(--chart-1)',
+  in_transit: 'oklch(0.55 0.16 255)',
   in_inventory: 'var(--chart-2)',
   reserved: 'var(--chart-3)',
-  sold: 'var(--chart-4)',
-  in_repair: 'var(--chart-5)',
+  sold: 'var(--chart-5)',
+  in_repair: 'oklch(0.6 0.105 195)',
   unavailable: 'var(--muted-foreground)',
 };
 
@@ -73,6 +97,7 @@ export function DashboardPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
+        eyebrow="Tablero"
         title={`Hola, ${user?.firstName ?? ''}`}
         description="Resumen del inventario y del desempeno comercial."
       />
@@ -133,12 +158,12 @@ export function DashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis
                     dataKey="label"
-                    tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
+                    tick={AXIS_TICK}
                     tickLine={false}
                     axisLine={false}
                   />
                   <YAxis
-                    tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
+                    tick={AXIS_TICK}
                     tickLine={false}
                     axisLine={false}
                     tickFormatter={(value: number) => formatMoneyCompact(value)}
@@ -146,16 +171,15 @@ export function DashboardPage() {
                   />
                   <Tooltip
                     formatter={(value: number, name: string) => [formatMoney(value, reporting), name]}
-                    contentStyle={{
-                      backgroundColor: 'var(--popover)',
-                      border: '1px solid var(--border)',
-                      borderRadius: 8,
-                      fontSize: 13,
-                    }}
+                    contentStyle={TOOLTIP_STYLE}
                   />
-                  <Legend wrapperStyle={{ fontSize: 13 }} />
-                  <Bar dataKey="totalAmount" name="Facturado" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="totalCollected" name="Cobrado" fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
+                  <Legend
+                    iconType="circle"
+                    iconSize={8}
+                    wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
+                  />
+                  <Bar dataKey="totalAmount" name="Facturado" fill="var(--chart-1)" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="totalCollected" name="Cobrado" fill="var(--chart-2)" radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -197,14 +221,13 @@ export function DashboardPage() {
                   </Pie>
                   <Tooltip
                     formatter={(value: number, name: string) => [`${value} unidades`, name]}
-                    contentStyle={{
-                      backgroundColor: 'var(--popover)',
-                      border: '1px solid var(--border)',
-                      borderRadius: 8,
-                      fontSize: 13,
-                    }}
+                    contentStyle={TOOLTIP_STYLE}
                   />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Legend
+                    iconType="circle"
+                    iconSize={8}
+                    wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -227,12 +250,12 @@ export function DashboardPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis
                   dataKey="label"
-                  tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
+                  tick={AXIS_TICK}
                   tickLine={false}
                   axisLine={false}
                 />
                 <YAxis
-                  tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
+                  tick={AXIS_TICK}
                   tickLine={false}
                   axisLine={false}
                   allowDecimals={false}
@@ -240,19 +263,15 @@ export function DashboardPage() {
                 />
                 <Tooltip
                   formatter={(value: number) => [`${value} ventas`, 'Ventas']}
-                  contentStyle={{
-                    backgroundColor: 'var(--popover)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 8,
-                    fontSize: 13,
-                  }}
+                  contentStyle={TOOLTIP_STYLE}
                 />
                 <Line
                   type="monotone"
                   dataKey="totalSales"
                   stroke={CHART_COLORS[0]}
                   strokeWidth={2}
-                  dot={{ r: 3 }}
+                  dot={{ r: 2.5, strokeWidth: 0, fill: CHART_COLORS[0] }}
+                  activeDot={{ r: 4.5, strokeWidth: 2, stroke: 'var(--card)' }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -263,6 +282,14 @@ export function DashboardPage() {
   );
 }
 
+/**
+ * Tarjeta de KPI.
+ *
+ * La cifra manda: monoespaciada, grande y sin competencia visual. El icono se
+ * queda en gris y pequeño porque no aporta dato, solo ayuda a reencontrar la
+ * tarjeta de un vistazo. El filete superior de color es la unica señal de tono,
+ * y va acompañado del color del propio numero: nunca solo color.
+ */
 function MetricCard({
   icon: Icon,
   label,
@@ -279,30 +306,54 @@ function MetricCard({
   tone?: 'neutral' | 'positive' | 'warning';
 }) {
   const content = (
-    <Card className="h-full transition-colors hover:border-primary/40">
-      <CardContent className="flex items-start justify-between gap-3 p-6">
-        <div className="flex min-w-0 flex-col gap-1">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {label}
-          </span>
+    <Card
+      className={cn(
+        'group relative h-full overflow-hidden transition-[border-color,box-shadow] duration-200',
+        to && 'hover:border-foreground/25 hover:shadow-raised',
+      )}
+    >
+      {/* Filete superior: gris en reposo, color cuando el dato tiene carga. */}
+      <span
+        aria-hidden
+        className={cn(
+          'absolute inset-x-0 top-0 h-0.5',
+          tone === 'positive' && 'bg-success',
+          tone === 'warning' && 'bg-warning',
+          tone === 'neutral' && 'bg-border',
+        )}
+      />
+
+      <CardContent className="flex items-start justify-between gap-3 px-5 pb-5 pt-5">
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <span className="label-micro text-muted-foreground">{label}</span>
           <span
-            className={[
-              'tabular truncate text-2xl font-semibold',
-              tone === 'positive' ? 'text-emerald-600' : '',
-              tone === 'warning' ? 'text-amber-600' : '',
-            ].join(' ')}
+            className={cn(
+              'num truncate text-[26px] font-semibold leading-none',
+              tone === 'positive' && 'text-success',
+              tone === 'warning' && 'text-warning',
+            )}
           >
             {value}
           </span>
           {hint && <span className="truncate text-xs text-muted-foreground">{hint}</span>}
         </div>
 
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-          <Icon className="size-4.5 text-primary" />
-        </div>
+        <Icon
+          className={cn(
+            'size-5 shrink-0 text-muted-foreground/50 transition-colors',
+            to && 'group-hover:text-foreground',
+          )}
+          aria-hidden
+        />
       </CardContent>
     </Card>
   );
 
-  return to ? <Link to={to}>{content}</Link> : content;
+  return to ? (
+    <Link to={to} className="rounded-xl">
+      {content}
+    </Link>
+  ) : (
+    content
+  );
 }

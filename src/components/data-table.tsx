@@ -88,7 +88,7 @@ export function DataTable<TData>({
 
   if (isError) {
     return (
-      <div className="rounded-xl border border-border bg-card">
+      <div className="rounded-xl border border-border bg-card shadow-card">
         <ErrorState error={error} onRetry={onRetry} />
       </div>
     );
@@ -96,14 +96,14 @@ export function DataTable<TData>({
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-border bg-card">
+      <div className="rounded-xl border border-border bg-card shadow-card">
         <TableSkeleton columns={columns.length} />
       </div>
     );
   }
 
   if (data.length === 0) {
-    return <div className="rounded-xl border border-border bg-card">{emptyState}</div>;
+    return <div className="rounded-xl border border-border bg-card shadow-card">{emptyState}</div>;
   }
 
   const from = (page - 1) * (meta?.pageSize ?? data.length) + 1;
@@ -113,13 +113,14 @@ export function DataTable<TData>({
     <div className="flex flex-col gap-3">
       <div
         className={cn(
-          'overflow-hidden rounded-xl border border-border bg-card transition-opacity',
+          'overflow-hidden rounded-xl border border-border bg-card shadow-card transition-opacity duration-150',
           // Al cambiar de pagina o filtro se atenua en vez de vaciarse.
           isFetching && 'opacity-60',
         )}
+        aria-busy={isFetching || undefined}
       >
         <Table>
-          <TableHeader className="bg-muted/40">
+          <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => (
@@ -139,6 +140,7 @@ export function DataTable<TData>({
                 key={row.id}
                 onClick={onRowClick ? () => onRowClick(row.original) : undefined}
                 className={cn(onRowClick && 'cursor-pointer')}
+                data-clickable={onRowClick ? '' : undefined}
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
@@ -154,15 +156,16 @@ export function DataTable<TData>({
       {meta && (
         <div className="flex flex-col-reverse items-start justify-between gap-3 px-1 sm:flex-row sm:items-center">
           <p className="text-xs text-muted-foreground">
-            Mostrando <span className="font-medium text-foreground">{formatNumber(from)}</span>–
-            <span className="font-medium text-foreground">{formatNumber(to)}</span> de{' '}
-            <span className="font-medium text-foreground">{formatNumber(total)}</span> {resourceLabel}
+            Mostrando <span className="num font-medium text-foreground">{formatNumber(from)}</span>–
+            <span className="num font-medium text-foreground">{formatNumber(to)}</span> de{' '}
+            <span className="num font-medium text-foreground">{formatNumber(total)}</span>{' '}
+            {resourceLabel}
           </p>
 
           <div className="flex items-center gap-4">
             {onPageSizeChange && (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Por pagina</span>
+                <span className="label-micro text-muted-foreground">Por pagina</span>
                 <Select
                   value={String(meta.pageSize)}
                   onValueChange={(value) => onPageSizeChange(Number(value))}
@@ -183,7 +186,8 @@ export function DataTable<TData>({
 
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">
-                Pagina {page} de {Math.max(totalPages, 1)}
+                Pagina <span className="num text-foreground">{page}</span> de{' '}
+                <span className="num text-foreground">{Math.max(totalPages, 1)}</span>
               </span>
               <Button
                 variant="outline"

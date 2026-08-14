@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Car, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, Car, Eye, EyeOff } from 'lucide-react';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
@@ -50,40 +50,63 @@ export function LoginPage() {
   });
 
   return (
-    <div className="flex min-h-dvh flex-col bg-muted/40 lg:flex-row">
-      {/* Panel de marca: solo aporta en escritorio, se oculta en movil. */}
-      <aside className="hidden bg-primary p-12 text-primary-foreground lg:flex lg:w-2/5 lg:flex-col lg:justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="flex size-9 items-center justify-center rounded-lg bg-primary-foreground/15">
-            <Car className="size-5" />
-          </div>
-          <span className="text-lg font-semibold">JFM AutoManager</span>
+    <div className="flex min-h-dvh flex-col bg-background lg:flex-row">
+      {/*
+        Panel de marca. Solo aporta en escritorio, asi que en movil desaparece
+        entero en vez de encogerse a una franja decorativa que roba altura al
+        formulario.
+      */}
+      <aside className="relative hidden overflow-hidden bg-sidebar p-12 text-sidebar-accent-foreground lg:flex lg:w-[42%] lg:max-w-2xl lg:flex-col lg:justify-between">
+        {/* Retícula de plano tecnico: textura, no ilustracion. */}
+        <div className="grid-blueprint pointer-events-none absolute inset-0 text-white/70" aria-hidden />
+        <div
+          className="pointer-events-none absolute -right-24 -top-24 size-[28rem] rounded-full bg-signal/12 blur-3xl"
+          aria-hidden
+        />
+
+        <div className="relative flex items-center gap-3">
+          <span className="flex size-10 items-center justify-center rounded-lg bg-signal text-signal-foreground">
+            <Car className="size-5" aria-hidden />
+          </span>
+          <span className="flex flex-col leading-none">
+            <span className="text-lg font-bold tracking-tight">
+              JFM<span className="font-normal text-sidebar-foreground"> AutoManager</span>
+            </span>
+            <span className="label-micro mt-1 text-sidebar-muted">EJGH Auto Import</span>
+          </span>
         </div>
 
-        <div className="flex flex-col gap-3">
-          <h1 className="text-3xl font-semibold leading-tight">
+        <div className="relative flex flex-col gap-5">
+          <span className="h-1 w-14 rounded-full bg-signal" aria-hidden />
+          <h1 className="max-w-md text-[2.5rem] font-bold leading-[1.08] tracking-[-0.03em]">
             Inventario y ventas de vehiculos, en un solo lugar.
           </h1>
-          <p className="max-w-md text-sm text-primary-foreground/80">
+          <p className="max-w-md text-[15px] leading-relaxed text-sidebar-foreground">
             Controla la importacion, los costos por unidad y el ciclo comercial completo, desde la
             cotizacion hasta el ultimo cobro.
           </p>
         </div>
 
-        <p className="text-xs text-primary-foreground/70">EJGH AUTO IMPORT SRL · Republica Dominicana</p>
+        <p className="label-micro relative text-sidebar-muted">
+          EJGH Auto Import SRL · Republica Dominicana
+        </p>
       </aside>
 
-      <main className="flex flex-1 items-center justify-center p-6">
-        <div className="w-full max-w-sm">
+      <main className="flex flex-1 items-center justify-center px-6 py-12">
+        <div className="w-full max-w-[23rem]">
           <div className="mb-8 flex flex-col items-center gap-3 lg:hidden">
-            <div className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <Car className="size-6" />
-            </div>
-            <span className="text-lg font-semibold">JFM AutoManager</span>
+            <span className="flex size-12 items-center justify-center rounded-xl bg-signal text-signal-foreground">
+              <Car className="size-6" aria-hidden />
+            </span>
+            <span className="text-lg font-bold tracking-tight">
+              JFM<span className="font-normal text-muted-foreground"> AutoManager</span>
+            </span>
           </div>
 
-          <div className="mb-6 flex flex-col gap-1">
-            <h2 className="text-xl font-semibold tracking-tight">Iniciar sesion</h2>
+          <div className="mb-7 flex flex-col gap-1.5">
+            <h2 className="text-[26px] font-bold leading-tight tracking-[-0.025em]">
+              Iniciar sesion
+            </h2>
             <p className="text-sm text-muted-foreground">
               Ingresa tus credenciales para acceder al panel.
             </p>
@@ -114,7 +137,7 @@ export function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((value) => !value)}
-                  className="absolute right-0 top-0 flex h-9 w-10 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+                  className="hit-target absolute right-1 top-1 flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
                 >
                   {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -125,16 +148,21 @@ export function LoginPage() {
             {errors.root && (
               <p
                 role="alert"
-                className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                className="flex items-start gap-2 rounded-md border border-danger/25 bg-danger/8 px-3 py-2.5 text-[13px] font-medium text-danger"
               >
+                <AlertCircle className="mt-px size-4 shrink-0" aria-hidden />
                 {errors.root.message}
               </p>
             )}
 
-            <Button type="submit" className="mt-2 w-full" loading={isSubmitting}>
+            <Button type="submit" size="lg" className="mt-2 w-full" loading={isSubmitting}>
               Entrar
             </Button>
           </form>
+
+          <p className="mt-8 text-center text-xs text-muted-foreground lg:hidden">
+            EJGH Auto Import SRL · Republica Dominicana
+          </p>
         </div>
       </main>
     </div>

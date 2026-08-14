@@ -120,7 +120,7 @@ export function QuotationsListPage() {
             isPastCivil(row.original.validUntil) && row.original.status === 'pending';
 
           return (
-            <span className={overdue ? 'tabular text-destructive' : 'tabular'}>
+            <span className={overdue ? 'tabular text-danger' : 'tabular'}>
               {formatCivilDate(row.original.validUntil)}
             </span>
           );

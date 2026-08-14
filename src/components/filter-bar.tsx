@@ -17,6 +17,10 @@ import { cn } from '@/lib/utils';
  *
  * Los filtros viajan al servidor como query params; la tabla no filtra en
  * memoria lo que el backend ya sabe filtrar.
+ *
+ * Se dibuja como una regleta acotada, no como controles sueltos sobre el fondo:
+ * asi se lee como el panel de mando de la tabla que tiene debajo, y "Limpiar"
+ * queda anclado al extremo derecho en vez de flotar al final de la fila.
  */
 export function FilterBar({
   children,
@@ -30,12 +34,25 @@ export function FilterBar({
   className?: string;
 }) {
   return (
-    <div className={cn('flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center', className)}>
+    <div
+      className={cn(
+        'flex flex-col gap-2.5 rounded-xl border border-border bg-card p-2.5 shadow-card',
+        'sm:flex-row sm:flex-wrap sm:items-center',
+        className,
+      )}
+      role="search"
+    >
       {children}
+
       {showClear && onClear && (
-        <Button variant="ghost" size="sm" onClick={onClear} className="text-muted-foreground">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onClear}
+          className="text-muted-foreground sm:ml-auto"
+        >
           <X />
-          Limpiar
+          Limpiar filtros
         </Button>
       )}
     </div>
@@ -78,14 +95,30 @@ export function SearchInput({
 
   return (
     <div className={cn('relative w-full sm:max-w-xs', className)}>
-      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Search
+        className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+        aria-hidden
+      />
       <Input
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
         placeholder={placeholder}
-        className="pl-9"
+        className={cn('pl-9', draft && 'pr-9')}
         type="search"
+        aria-label={placeholder}
       />
+
+      {/* Borrar la busqueda sin tener que mantener el retroceso pulsado. */}
+      {draft && (
+        <button
+          type="button"
+          onClick={() => setDraft('')}
+          className="hit-target absolute right-1 top-1 flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          aria-label="Borrar busqueda"
+        >
+          <X className="size-3.5" />
+        </button>
+      )}
     </div>
   );
 }

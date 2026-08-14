@@ -303,7 +303,7 @@ export function PurchaseForm({ purchase }: { purchase?: Purchase }) {
             </div>
 
             {errors.items?.message && (
-              <p className="text-xs font-medium text-destructive">{errors.items.message}</p>
+              <p className="text-xs font-medium text-danger">{errors.items.message}</p>
             )}
 
             <div className="flex flex-col gap-4">

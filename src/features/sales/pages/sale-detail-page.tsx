@@ -1,4 +1,4 @@
-import { CheckCircle2, Plus, Trash2, XCircle } from 'lucide-react';
+import { CheckCircle2, FileText, Plus, Trash2, XCircle } from 'lucide-react';
 import * as React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/confirm-dialog';
@@ -59,6 +59,13 @@ export function SaleDetailPage() {
         backLabel="Ventas"
         actions={
           <>
+            <Button variant="outline" asChild>
+              <Link to={`/sales/${sale.id}/invoice`}>
+                <FileText />
+                Factura
+              </Link>
+            </Button>
+
             {canRegisterPayment && (
               <Button onClick={() => setPaymentOpen(true)}>
                 <Plus />
@@ -298,8 +305,8 @@ function Amount({
       <span
         className={cn(
           'tabular text-xl font-semibold',
-          tone === 'positive' && 'text-emerald-600',
-          tone === 'warning' && 'text-amber-600',
+          tone === 'positive' && 'text-success',
+          tone === 'warning' && 'text-warning',
         )}
       >
         {value}

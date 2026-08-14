@@ -11,7 +11,9 @@ const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      'inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground',
+      // Subrayado sobre una linea continua, no pastillas: en un panel de datos
+      // las pestanas deben leerse como secciones de un documento tecnico.
+      'inline-flex h-10 w-full items-center justify-start gap-1 overflow-x-auto border-b border-border text-muted-foreground',
       className,
     )}
     {...props}
@@ -26,9 +28,12 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-all',
-      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
-      'data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm',
+      'relative inline-flex h-10 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap px-3 text-sm font-medium',
+      'transition-colors duration-150 hover:text-foreground disabled:pointer-events-none disabled:opacity-50',
+      'data-[state=active]:text-foreground',
+      // La barra activa se dibuja sobre el borde del contenedor, sin mover nada.
+      'after:absolute after:inset-x-2 after:-bottom-px after:h-0.5 after:rounded-full after:bg-transparent',
+      'data-[state=active]:after:bg-signal',
       '[&_svg]:size-4',
       className,
     )}

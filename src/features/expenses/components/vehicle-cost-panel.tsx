@@ -137,9 +137,9 @@ export function VehicleCostPanel({ vehicleId }: { vehicleId: string }) {
               <div className="border-t border-border pt-4">
                 <div className="flex items-center gap-2">
                   {(cost.margin ?? 0) >= 0 ? (
-                    <TrendingUp className="size-4 text-emerald-600" />
+                    <TrendingUp className="size-4 text-success" />
                   ) : (
-                    <TrendingDown className="size-4 text-destructive" />
+                    <TrendingDown className="size-4 text-danger" />
                   )}
                   <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Margen
@@ -148,7 +148,7 @@ export function VehicleCostPanel({ vehicleId }: { vehicleId: string }) {
                 <p
                   className={cn(
                     'tabular mt-1 text-2xl font-semibold',
-                    (cost.margin ?? 0) >= 0 ? 'text-emerald-600' : 'text-destructive',
+                    (cost.margin ?? 0) >= 0 ? 'text-success' : 'text-danger',
                   )}
                 >
                   {formatMoney(cost.margin, reporting)}

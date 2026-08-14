@@ -36,7 +36,7 @@ export function FormField({
       <Label htmlFor={htmlFor}>
         {label}
         {required && (
-          <span className="ml-0.5 text-destructive" aria-hidden>
+          <span className="ml-0.5 text-danger" aria-hidden>
             *
           </span>
         )}
@@ -45,7 +45,7 @@ export function FormField({
       {children}
 
       {message ? (
-        <p id={htmlFor ? `${htmlFor}-error` : undefined} className="text-xs font-medium text-destructive">
+        <p id={htmlFor ? `${htmlFor}-error` : undefined} className="text-xs font-medium text-danger">
           {message}
         </p>
       ) : hint ? (

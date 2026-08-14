@@ -1,10 +1,18 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
+/**
+ * Tabla del panel.
+ *
+ * Densidad de consola: filas de 44px, cabecera de 36px en micro-versalitas y
+ * separadores tenues. La cabecera es `sticky` dentro del contenedor: al bajar
+ * por cien vehiculos, saber que columna se esta leyendo no puede depender de
+ * volver arriba.
+ */
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
     // El contenedor scrollea en horizontal: en tablet una tabla de ERP no cabe.
-    <div className="relative w-full overflow-x-auto">
+    <div className="relative max-h-[70dvh] w-full overflow-auto">
       <table ref={ref} className={cn('w-full caption-bottom text-sm', className)} {...props} />
     </div>
   ),
@@ -12,7 +20,17 @@ const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableE
 Table.displayName = 'Table';
 
 const TableHeader = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(
-  ({ className, ...props }, ref) => <thead ref={ref} className={cn('[&_tr]:border-b', className)} {...props} />,
+  ({ className, ...props }, ref) => (
+    <thead
+      ref={ref}
+      className={cn(
+        'sticky top-0 z-10 bg-muted/70 backdrop-blur supports-[backdrop-filter]:bg-muted/60',
+        '[&_tr]:border-b [&_tr]:border-border',
+        className,
+      )}
+      {...props}
+    />
+  ),
 );
 TableHeader.displayName = 'TableHeader';
 
@@ -25,7 +43,11 @@ TableBody.displayName = 'TableBody';
 
 const TableFooter = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(
   ({ className, ...props }, ref) => (
-    <tfoot ref={ref} className={cn('border-t bg-muted/50 font-medium', className)} {...props} />
+    <tfoot
+      ref={ref}
+      className={cn('border-t border-border bg-muted/50 font-medium', className)}
+      {...props}
+    />
   ),
 );
 TableFooter.displayName = 'TableFooter';
@@ -34,7 +56,11 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
   ({ className, ...props }, ref) => (
     <tr
       ref={ref}
-      className={cn('border-b border-border transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted', className)}
+      className={cn(
+        'border-b border-border/70 transition-colors duration-100',
+        'hover:bg-accent/60 data-[state=selected]:bg-accent',
+        className,
+      )}
       {...props}
     />
   ),
@@ -46,7 +72,7 @@ const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<
     <th
       ref={ref}
       className={cn(
-        'h-11 whitespace-nowrap px-4 text-left align-middle text-xs font-semibold uppercase tracking-wide text-muted-foreground',
+        'label-micro h-9 whitespace-nowrap px-4 text-left align-middle text-muted-foreground',
         className,
       )}
       {...props}
@@ -57,7 +83,7 @@ TableHead.displayName = 'TableHead';
 
 const TableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttributes<HTMLTableCellElement>>(
   ({ className, ...props }, ref) => (
-    <td ref={ref} className={cn('px-4 py-3 align-middle', className)} {...props} />
+    <td ref={ref} className={cn('h-11 px-4 py-2 align-middle', className)} {...props} />
   ),
 );
 TableCell.displayName = 'TableCell';

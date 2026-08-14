@@ -2,98 +2,146 @@
 @import 'tw-animate-css';
 
 /*
- * Tema JFM AutoManager: base neutra (slate) con un unico acento azul
- * corporativo. Las variables siguen la convencion de shadcn/ui para que los
- * primitivos de `components/ui` funcionen sin tocarlos.
+ * ============================================================================
+ * JFM AutoManager — sistema de diseno
+ * ============================================================================
+ *
+ * Direccion: consola de concesionario. Grafito premium + rojo senal, tipografia
+ * grotesca industrial y superficies densas definidas por borde (no por sombra).
+ *
+ * Regla de color que sostiene todo lo demas:
+ *   - GRAFITO es la accion afirmativa (guardar, crear, confirmar).
+ *   - ROJO es marca y peligro, nunca un "guardar". Al no competir por el mismo
+ *     rol, el usuario nunca duda de si un boton rojo destruye o confirma.
+ *
+ * El tema se controla con `data-theme` en <html> (lo fija el script de
+ * `index.html` antes del primer pintado). El sidebar es grafito oscuro en los
+ * dos temas: es el ancla visual del producto.
  */
-:root {
-  --radius: 0.625rem;
 
-  --background: oklch(0.99 0.002 247);
-  --foreground: oklch(0.21 0.03 264);
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+:root {
+  --radius: 0.5rem;
+
+  /* --- Superficies ------------------------------------------------------- */
+  --background: oklch(0.974 0.004 250);
+  --foreground: oklch(0.208 0.042 265);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.21 0.03 264);
+  --card-foreground: oklch(0.208 0.042 265);
 
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.21 0.03 264);
+  --popover-foreground: oklch(0.208 0.042 265);
 
-  --primary: oklch(0.55 0.19 258);
-  --primary-foreground: oklch(0.98 0.01 258);
+  /* --- Accion afirmativa: grafito ---------------------------------------- */
+  --primary: oklch(0.279 0.041 260);
+  --primary-foreground: oklch(0.985 0.002 247);
 
-  --secondary: oklch(0.97 0.005 247);
-  --secondary-foreground: oklch(0.28 0.03 264);
+  --secondary: oklch(0.955 0.006 250);
+  --secondary-foreground: oklch(0.279 0.041 260);
 
-  --muted: oklch(0.97 0.005 247);
-  --muted-foreground: oklch(0.55 0.02 260);
+  --muted: oklch(0.962 0.006 250);
+  /* slate-600: 4.5:1 real sobre blanco, no el gris-sobre-gris de siempre. */
+  --muted-foreground: oklch(0.446 0.043 257);
 
-  --accent: oklch(0.96 0.012 258);
-  --accent-foreground: oklch(0.35 0.09 258);
+  --accent: oklch(0.945 0.008 252);
+  --accent-foreground: oklch(0.279 0.041 260);
 
-  --destructive: oklch(0.58 0.22 27);
-  --destructive-foreground: oklch(0.98 0.01 27);
+  /* --- Rojo senal: marca y peligro --------------------------------------- */
+  --signal: oklch(0.577 0.245 27.3);
+  --signal-foreground: oklch(0.985 0.005 20);
 
-  --border: oklch(0.93 0.006 260);
-  --input: oklch(0.93 0.006 260);
-  --ring: oklch(0.55 0.19 258);
+  --destructive: oklch(0.577 0.245 27.3);
+  --destructive-foreground: oklch(0.985 0.005 20);
+  /* Rojo legible como *texto* sobre la superficie del tema. */
+  --danger: oklch(0.545 0.225 27.3);
 
-  --sidebar: oklch(0.985 0.003 247);
-  --sidebar-foreground: oklch(0.3 0.03 264);
-  --sidebar-accent: oklch(0.95 0.015 258);
-  --sidebar-accent-foreground: oklch(0.42 0.14 258);
-  --sidebar-border: oklch(0.92 0.006 260);
+  --success: oklch(0.596 0.145 163);
+  --warning: oklch(0.588 0.155 58);
 
-  --chart-1: oklch(0.55 0.19 258);
-  --chart-2: oklch(0.65 0.15 175);
-  --chart-3: oklch(0.72 0.15 70);
-  --chart-4: oklch(0.62 0.2 310);
-  --chart-5: oklch(0.6 0.19 25);
+  /* --- Trazo ------------------------------------------------------------- */
+  --border: oklch(0.902 0.013 253);
+  /*
+   * El borde de un campo es mas oscuro que el de una tarjeta a proposito: la
+   * WCAG 1.4.11 pide 3:1 para el limite de un control, y el gris claro de
+   * costumbre se queda en 1.3:1 contra el lienzo. En un panel que es sobre todo
+   * formularios, no saber donde empieza el campo es el peor de los defectos.
+   */
+  --input: oklch(0.645 0.032 255);
+  --ring: oklch(0.279 0.041 260);
+
+  /* --- Sidebar (grafito en ambos temas) ---------------------------------- */
+  --sidebar: oklch(0.208 0.03 264);
+  --sidebar-foreground: oklch(0.735 0.025 258);
+  --sidebar-muted: oklch(0.6 0.025 258);
+  --sidebar-accent: oklch(0.285 0.032 262);
+  --sidebar-accent-foreground: oklch(0.985 0.002 247);
+  --sidebar-border: oklch(1 0 0 / 9%);
+
+  /* --- Graficas: rampa coherente, no arcoiris ---------------------------- */
+  --chart-1: oklch(0.45 0.055 255);
+  --chart-2: oklch(0.596 0.145 163);
+  --chart-3: oklch(0.72 0.17 62);
+  --chart-4: oklch(0.577 0.245 27.3);
+  --chart-5: oklch(0.55 0.16 295);
 }
 
-.dark {
-  --background: oklch(0.19 0.02 265);
-  --foreground: oklch(0.97 0.004 247);
+:root[data-theme='dark'] {
+  --background: oklch(0.168 0.018 265);
+  --foreground: oklch(0.958 0.005 250);
 
-  --card: oklch(0.23 0.023 265);
-  --card-foreground: oklch(0.97 0.004 247);
+  --card: oklch(0.208 0.021 265);
+  --card-foreground: oklch(0.958 0.005 250);
 
-  --popover: oklch(0.23 0.023 265);
-  --popover-foreground: oklch(0.97 0.004 247);
+  --popover: oklch(0.228 0.022 265);
+  --popover-foreground: oklch(0.958 0.005 250);
 
-  --primary: oklch(0.65 0.17 258);
-  --primary-foreground: oklch(0.18 0.03 258);
+  /* En oscuro la accion afirmativa se invierte: superficie clara, texto grafito. */
+  --primary: oklch(0.93 0.008 250);
+  --primary-foreground: oklch(0.208 0.03 264);
 
-  --secondary: oklch(0.28 0.025 265);
-  --secondary-foreground: oklch(0.97 0.004 247);
+  --secondary: oklch(0.268 0.022 264);
+  --secondary-foreground: oklch(0.958 0.005 250);
 
-  --muted: oklch(0.28 0.025 265);
-  --muted-foreground: oklch(0.7 0.02 258);
+  --muted: oklch(0.262 0.02 264);
+  --muted-foreground: oklch(0.715 0.03 257);
 
-  --accent: oklch(0.31 0.04 260);
-  --accent-foreground: oklch(0.93 0.02 258);
+  --accent: oklch(0.292 0.026 263);
+  --accent-foreground: oklch(0.962 0.005 250);
 
-  --destructive: oklch(0.62 0.2 25);
-  --destructive-foreground: oklch(0.97 0.01 25);
+  --signal: oklch(0.637 0.237 25.3);
+  --signal-foreground: oklch(0.985 0.005 20);
 
-  --border: oklch(1 0 0 / 12%);
+  /* Mas oscuro que en claro: sobre fondo oscuro el blanco encima debe pasar AA. */
+  --destructive: oklch(0.545 0.215 27);
+  --destructive-foreground: oklch(0.985 0.005 20);
+  --danger: oklch(0.704 0.191 22.2);
+
+  --success: oklch(0.696 0.135 163);
+  --warning: oklch(0.769 0.165 62);
+
+  --border: oklch(1 0 0 / 11%);
   --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.62 0.16 258);
+  --ring: oklch(0.72 0.03 255);
 
-  --sidebar: oklch(0.22 0.022 265);
-  --sidebar-foreground: oklch(0.93 0.006 247);
-  --sidebar-accent: oklch(0.3 0.04 260);
-  --sidebar-accent-foreground: oklch(0.93 0.02 258);
-  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar: oklch(0.192 0.024 264);
+  --sidebar-foreground: oklch(0.735 0.025 258);
+  --sidebar-muted: oklch(0.6 0.025 258);
+  --sidebar-accent: oklch(0.275 0.03 262);
+  --sidebar-accent-foreground: oklch(0.985 0.002 247);
+  --sidebar-border: oklch(1 0 0 / 9%);
 
-  --chart-1: oklch(0.65 0.17 258);
-  --chart-2: oklch(0.7 0.14 175);
-  --chart-3: oklch(0.77 0.14 70);
-  --chart-4: oklch(0.68 0.18 310);
-  --chart-5: oklch(0.66 0.18 25);
+  --chart-1: oklch(0.68 0.06 255);
+  --chart-2: oklch(0.696 0.135 163);
+  --chart-3: oklch(0.79 0.16 62);
+  --chart-4: oklch(0.637 0.237 25.3);
+  --chart-5: oklch(0.68 0.15 295);
 }
 
 @theme inline {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Archivo', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'Menlo', monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -111,12 +159,18 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-danger: var(--danger);
+  --color-signal: var(--signal);
+  --color-signal-foreground: var(--signal-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
 
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
@@ -127,10 +181,16 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
 
+  /* Radios mas cerrados que el shadcn de fabrica: precision, no blandura. */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Elevacion discreta: el borde define, la sombra solo separa del lienzo. */
+  --shadow-card: 0 1px 2px oklch(0.21 0.04 265 / 0.05), 0 1px 3px oklch(0.21 0.04 265 / 0.05);
+  --shadow-raised: 0 1px 2px oklch(0.21 0.04 265 / 0.08), 0 2px 8px -2px oklch(0.21 0.04 265 / 0.08);
+  --shadow-pop: 0 10px 30px -8px oklch(0.21 0.04 265 / 0.18), 0 2px 8px -2px oklch(0.21 0.04 265 / 0.08);
 }
 
 @layer base {
@@ -138,16 +198,215 @@
     border-color: var(--border);
   }
 
+  html {
+    color-scheme: light;
+  }
+
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+  }
+
   body {
     background-color: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
-  /* Los numeros de tablas y montos alinean mejor con cifras tabulares. */
+  /* Titulos apretados: la grotesca industrial pide tracking negativo. */
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.016em;
+  }
+
+  ::selection {
+    background-color: color-mix(in oklch, var(--signal) 22%, transparent);
+  }
+
+  /* Anillo de foco unico para todo: la accesibilidad no se resuelve por componente. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* Toda cifra alinea en columna; el monoespaciado hace legible el dinero. */
   table,
   .tabular {
     font-variant-numeric: tabular-nums;
   }
+
+  /* Barras de scroll integradas al tema, no las del sistema. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklch, var(--foreground) 22%, transparent) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklch, var(--foreground) 18%, transparent);
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in oklch, var(--foreground) 32%, transparent);
+  }
+
+  /* El autofill de Chrome pinta un amarillo que rompe el tema. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--foreground);
+    -webkit-box-shadow: 0 0 0 1000px var(--card) inset;
+    caret-color: var(--foreground);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/*
+ * Impresion
+ * ---------------------------------------------------------------------------
+ * El panel no se imprime; los documentos si. Todo lo que es cromo de la
+ * aplicacion lleva `print:hidden` en su componente, y aqui se ajusta la hoja.
+ */
+@media print {
+  @page {
+    size: A4;
+    /* Los margenes los pone el propio documento, en milimetros y a su medida. */
+    margin: 0;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    /* El tema oscuro no puede llegar al papel bajo ninguna circunstancia. */
+    color: #0f172a !important;
+  }
+
+  /* Una tabla de pagos partida a la mitad entre dos hojas es ilegible. */
+  tr,
+  thead,
+  .break-inside-avoid {
+    break-inside: avoid;
+  }
+
+  /* Si el detalle desborda a una segunda hoja, la cabecera se repite. */
+  thead {
+    display: table-header-group;
+  }
+
+  .invoice-sheet {
+    width: 100% !important;
+    max-width: none !important;
+    box-shadow: none !important;
+  }
+}
+
+/*
+ * Utilidades del sistema
+ * ---------------------------------------------------------------------------
+ */
+
+/** Micro-etiqueta tecnica: cabeceras de tabla, rotulos de KPI, agrupadores. */
+@utility label-micro {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+/** Cifra: monoespaciada y tabular. Montos, VIN, chasis, placas, folios. */
+@utility num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/**
+ * Amplia el area tactil a 44px reales en pantallas tactiles sin tocar el
+ * layout: un panel denso no puede permitirse botones de 44px de alto, pero un
+ * dedo tampoco puede fallar el objetivo.
+ */
+@utility hit-target {
+  position: relative;
+
+  @media (pointer: coarse) {
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      translate: -50% -50%;
+      min-width: 44px;
+      min-height: 44px;
+    }
+  }
+}
+
+/**
+ * Esqueleto de carga: un barrido de luz en lugar de un parpadeo. El barrido
+ * tiene direccion, y una direccion se lee como progreso; el `pulse` de fabrica
+ * solo se lee como "algo esta roto".
+ */
+@utility skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--muted);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    translate: -100% 0;
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklch, var(--foreground) 7%, transparent),
+      transparent
+    );
+    animation: jfm-shimmer 1.6s infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::after {
+      display: none;
+    }
+  }
+}
+
+@keyframes jfm-shimmer {
+  100% {
+    translate: 100% 0;
+  }
+}
+
+/** Rejilla fina de fondo — textura de plano tecnico para lienzos vacios. */
+@utility grid-blueprint {
+  background-image:
+    linear-gradient(to right, color-mix(in oklch, currentColor 8%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklch, currentColor 8%, transparent) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
