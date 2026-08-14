@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal, Pencil, Plus, Trash2, Truck } from 'lucide-react';
 import * as React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { DataTable } from '@/components/data-table';
 import { FilterBar, FilterSelect, SearchInput } from '@/components/filter-bar';
@@ -29,6 +30,7 @@ interface SupplierFilters {
 const INITIAL_FILTERS: SupplierFilters = { search: '', isActive: undefined };
 
 export function SuppliersListPage() {
+  const navigate = useNavigate();
   const { can } = useAuth();
   const { filters, query, hasActiveFilters, setPage, setPageSize, setFilter, resetFilters } =
     useListParams<SupplierFilters>(INITIAL_FILTERS);
@@ -100,7 +102,12 @@ export function SuppliersListPage() {
           if (!canWrite && !canDelete) return null;
 
           return (
-            <div className="flex justify-end">
+            <div
+              className="flex justify-end"
+              // La fila entera navega al detalle: sin esto, abrir el menu
+              // de acciones dispararia tambien la navegacion.
+              onClick={(event) => event.stopPropagation()}
+            >
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon-sm" aria-label="Acciones">
@@ -189,6 +196,7 @@ export function SuppliersListPage() {
         onRetry={() => void suppliersQuery.refetch()}
         onPageChange={setPage}
         onPageSizeChange={setPageSize}
+        onRowClick={(row) => navigate(`/suppliers/${row.id}`)}
         resourceLabel="proveedores"
         emptyState={
           hasActiveFilters ? (

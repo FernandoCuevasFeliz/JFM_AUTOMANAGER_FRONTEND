@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { BadgeDollarSign, FileText, Plus } from 'lucide-react';
+import { BadgeDollarSign, Plus } from 'lucide-react';
 import * as React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DataTable } from '@/components/data-table';
@@ -102,24 +102,6 @@ export function SalesListPage() {
         id: 'status',
         header: 'Estado',
         cell: ({ row }) => <StatusBadge meta={SALE_STATUS_META[row.original.status]} />,
-      },
-      {
-        id: 'invoice',
-        header: '',
-        size: 56,
-        cell: ({ row }) => (
-          <Link
-            to={`/sales/${row.original.id}/invoice`}
-            // La fila entera navega al detalle: sin esto un clic aqui dispararia
-            // las dos navegaciones y ganaria la de la fila.
-            onClick={(event) => event.stopPropagation()}
-            title={`Factura de ${row.original.saleNumber}`}
-            aria-label={`Ver factura de la venta ${row.original.saleNumber}`}
-            className="hit-target flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <FileText className="size-4" aria-hidden />
-          </Link>
-        ),
       },
     ],
     [],

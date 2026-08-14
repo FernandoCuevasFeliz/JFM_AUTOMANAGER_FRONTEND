@@ -120,8 +120,17 @@ export function VehicleTable({
         header: '',
         cell: ({ row }) => {
           const vehicle = row.original;
-          // Un vehiculo reservado o vendido no se borra (§7 de API.md).
-          const deletable = canDelete && !isCommerciallyManagedStatus(vehicle.status);
+          /*
+           * Un vehiculo reservado o vendido no se borra (§7 de API.md), pero la
+           * opcion se muestra **deshabilitada con el motivo** en vez de
+           * desaparecer: una accion que se esfuma se lee como que la funcion no
+           * existe, y una deshabilitada enseña la regla.
+           */
+          const bloqueadoPorEstado = isCommerciallyManagedStatus(vehicle.status);
+          const motivoBloqueo =
+            vehicle.status === 'sold'
+              ? 'No se puede: la unidad esta vendida'
+              : 'No se puede: la unidad esta reservada';
 
           return (
             <div className="flex justify-end" onClick={(event) => event.stopPropagation()}>
@@ -148,19 +157,33 @@ export function VehicleTable({
                     </DropdownMenuItem>
                   )}
 
-                  {canChangeStatus && !isCommerciallyManagedStatus(vehicle.status) && (
-                    <DropdownMenuItem onSelect={() => onChangeStatus(vehicle)}>
+                  {canChangeStatus && (
+                    <DropdownMenuItem
+                      disabled={bloqueadoPorEstado}
+                      onSelect={() => onChangeStatus(vehicle)}
+                    >
                       <RefreshCcw />
                       Cambiar estado
                     </DropdownMenuItem>
                   )}
 
-                  {deletable && (
+                  {canDelete && (
                     <>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem destructive onSelect={() => onDelete(vehicle)}>
+                      <DropdownMenuItem
+                        destructive={!bloqueadoPorEstado}
+                        disabled={bloqueadoPorEstado}
+                        onSelect={() => onDelete(vehicle)}
+                      >
                         <Trash2 />
-                        Eliminar
+                        <span className="flex flex-col">
+                          Eliminar
+                          {bloqueadoPorEstado && (
+                            <span className="text-[11px] leading-tight text-muted-foreground">
+                              {motivoBloqueo}
+                            </span>
+                          )}
+                        </span>
                       </DropdownMenuItem>
                     </>
                   )}

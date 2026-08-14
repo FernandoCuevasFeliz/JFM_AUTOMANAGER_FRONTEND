@@ -52,8 +52,17 @@ export function VehicleDetailPage() {
         backLabel="Vehiculos"
         actions={
           <>
-            {can('vehicles:change-status') && !commerciallyManaged && (
-              <Button variant="outline" onClick={() => setStatusOpen(true)}>
+            {can('vehicles:change-status') && (
+              <Button
+                variant="outline"
+                onClick={() => setStatusOpen(true)}
+                disabled={commerciallyManaged}
+                title={
+                  commerciallyManaged
+                    ? 'El estado de una unidad reservada o vendida lo gobierna el ciclo comercial'
+                    : undefined
+                }
+              >
                 <RefreshCcw />
                 Cambiar estado
               </Button>
@@ -66,9 +75,22 @@ export function VehicleDetailPage() {
                 </Link>
               </Button>
             )}
-            {/* Un vehiculo reservado o vendido no se puede borrar (§7). */}
-            {can('vehicles:delete') && !commerciallyManaged && (
-              <Button variant="outline" onClick={() => setDeleteOpen(true)}>
+            {/*
+              Un vehiculo reservado o vendido no se puede borrar (§7), pero el
+              boton se queda visible y deshabilitado con el motivo: si
+              desaparece, parece que la aplicacion no sabe borrar vehiculos.
+            */}
+            {can('vehicles:delete') && (
+              <Button
+                variant="outline"
+                onClick={() => setDeleteOpen(true)}
+                disabled={commerciallyManaged}
+                title={
+                  commerciallyManaged
+                    ? `No se puede eliminar: la unidad esta ${vehicle.status === 'sold' ? 'vendida' : 'reservada'}`
+                    : undefined
+                }
+              >
                 <Trash2 />
                 Eliminar
               </Button>

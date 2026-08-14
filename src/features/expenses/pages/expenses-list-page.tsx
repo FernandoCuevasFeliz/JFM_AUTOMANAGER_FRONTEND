@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal, Pencil, Plus, Receipt, Trash2 } from 'lucide-react';
 import * as React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { DataTable } from '@/components/data-table';
 import { FilterBar, FilterSelect, SearchInput } from '@/components/filter-bar';
@@ -46,6 +46,7 @@ const INITIAL_FILTERS: ExpenseFilters = {
 };
 
 export function ExpensesListPage() {
+  const navigate = useNavigate();
   const { can } = useAuth();
   const { filters, query, hasActiveFilters, setPage, setPageSize, setFilter, resetFilters } =
     useListParams<ExpenseFilters>(INITIAL_FILTERS);
@@ -123,7 +124,12 @@ export function ExpensesListPage() {
           if (!canWrite && !canDelete) return null;
 
           return (
-            <div className="flex justify-end">
+            <div
+              className="flex justify-end"
+              // La fila entera navega al detalle: sin esto, abrir el menu
+              // de acciones dispararia tambien la navegacion.
+              onClick={(event) => event.stopPropagation()}
+            >
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon-sm" aria-label="Acciones">
@@ -247,6 +253,7 @@ export function ExpensesListPage() {
         onRetry={() => void expensesQuery.refetch()}
         onPageChange={setPage}
         onPageSizeChange={setPageSize}
+        onRowClick={(row) => navigate(`/expenses/${row.id}`)}
         resourceLabel="gastos"
         emptyState={
           hasActiveFilters ? (

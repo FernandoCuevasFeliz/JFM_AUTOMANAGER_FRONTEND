@@ -18,6 +18,16 @@ export function useSuppliers(params: SupplierListParams) {
   });
 }
 
+export function useSupplier(id: string | undefined) {
+  const { can } = useAuth();
+
+  return useQuery({
+    queryKey: queryKeys.supplier(id ?? ''),
+    queryFn: () => suppliersApi.getById(id as string),
+    enabled: Boolean(id) && can('suppliers:read'),
+  });
+}
+
 function useInvalidateSuppliers() {
   const queryClient = useQueryClient();
   return () => void queryClient.invalidateQueries({ queryKey: ['suppliers'] });

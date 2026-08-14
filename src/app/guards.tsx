@@ -1,5 +1,5 @@
 import { ShieldX } from 'lucide-react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { EmptyState, FullPageLoader } from '@/components/states';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/use-auth';
@@ -13,15 +13,16 @@ import { Link } from 'react-router-dom';
  */
 export function RequireAuth() {
   const { status } = useAuth();
-  const location = useLocation();
 
   if (status === 'loading') {
     return <FullPageLoader label="Restaurando sesion…" />;
   }
 
   if (status === 'unauthenticated') {
-    // Se recuerda a donde iba para volver alli tras iniciar sesion.
-    return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
+    // No se guarda a donde iba: el login manda siempre al tablero, porque quien
+    // vuelve a entrar puede ser otro usuario con otros permisos (ver
+    // `login-page.tsx`).
+    return <Navigate to="/login" replace />;
   }
 
   return <Outlet />;

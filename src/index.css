@@ -74,7 +74,7 @@
   /* --- Sidebar (grafito en ambos temas) ---------------------------------- */
   --sidebar: oklch(0.208 0.03 264);
   --sidebar-foreground: oklch(0.735 0.025 258);
-  --sidebar-muted: oklch(0.6 0.025 258);
+  --sidebar-muted: oklch(0.625 0.025 258);
   --sidebar-accent: oklch(0.285 0.032 262);
   --sidebar-accent-foreground: oklch(0.985 0.002 247);
   --sidebar-border: oklch(1 0 0 / 9%);
@@ -127,7 +127,7 @@
 
   --sidebar: oklch(0.192 0.024 264);
   --sidebar-foreground: oklch(0.735 0.025 258);
-  --sidebar-muted: oklch(0.6 0.025 258);
+  --sidebar-muted: oklch(0.625 0.025 258);
   --sidebar-accent: oklch(0.275 0.03 262);
   --sidebar-accent-foreground: oklch(0.985 0.002 247);
   --sidebar-border: oklch(1 0 0 / 9%);

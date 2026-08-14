@@ -1,22 +1,27 @@
 import { Car } from 'lucide-react';
 import type * as React from 'react';
-import { formatCivilDate, formatCivilDateLong } from '@/lib/dates';
+import { formatCivilDate, formatCivilDateLong, formatDate } from '@/lib/dates';
 import { formatExchangeRate, formatMoney, formatPercentage } from '@/lib/money';
 import { cn } from '@/lib/utils';
-import { COMPANY, HAS_FISCAL_NUMBER, INVOICE_FOOTER_NOTE, NCF } from '../company';
-import type { Invoice } from '../invoice';
+import { COMPANY, INVOICE_FOOTER_NOTE } from '../company';
+import type { InvoiceView } from '../invoice-view';
+import { NCF_TYPE_LABELS } from '../types';
 
 /**
- * La factura, tal cual sale por la impresora.
+ * El comprobante, tal cual sale por la impresora.
  *
  * Va con colores fijos en vez de tokens del tema: es una hoja de papel. En modo
- * oscuro se sigue viendo blanca porque lo que se previsualiza es el impreso, no
- * la aplicacion. `print-color-adjust: exact` obliga al navegador a imprimir los
- * fondos, que por defecto descarta para ahorrar tinta.
+ * oscuro se sigue viendo blanca porque lo que se previsualiza es el impreso.
+ *
+ * Solo se rotula como **factura con valor fiscal** cuando la DGII ya la acepto
+ * y hay NCF. Mientras esta pendiente o rechazada, el papel lo dice: imprimir un
+ * borrador con pinta de comprobante definitivo es la peor cosa que puede hacer
+ * esta pantalla.
  */
-export function InvoiceDocument({ invoice }: { invoice: Invoice }) {
+export function InvoiceDocument({ invoice }: { invoice: InvoiceView }) {
   const { totals, client } = invoice;
-  const hasBalance = totals.balance > 0.004;
+  const emitida = invoice.status === 'issued' && Boolean(invoice.ncfNumber);
+  const anulada = invoice.status === 'cancelled';
 
   return (
     <article
@@ -48,17 +53,23 @@ export function InvoiceDocument({ invoice }: { invoice: Invoice }) {
         </div>
 
         <div className="shrink-0 text-right">
-          <p className="text-[17pt] font-bold uppercase leading-none tracking-[0.14em] text-[#DC2626]">
-            {HAS_FISCAL_NUMBER ? 'Factura' : 'Comprobante'}
+          <p className="text-[16pt] font-bold uppercase leading-none tracking-[0.12em] text-[#DC2626]">
+            {emitida ? 'Factura' : 'Borrador'}
+          </p>
+          <p className="mt-1 text-[8pt] font-semibold uppercase tracking-[0.06em] text-slate-500">
+            e-CF {invoice.ncfType} · {NCF_TYPE_LABELS[invoice.ncfType]}
           </p>
 
           <table className="ml-auto mt-3 text-[9pt]">
             <tbody>
-              <Meta label="No." value={invoice.saleNumber} mono strong />
-              {HAS_FISCAL_NUMBER && <Meta label="NCF" value={NCF} mono strong />}
+              {invoice.ncfNumber && <Meta label="NCF" value={invoice.ncfNumber} mono strong />}
+              <Meta label="Venta" value={invoice.saleNumber} mono />
               <Meta label="Fecha" value={formatCivilDate(invoice.saleDate)} mono />
+              {invoice.issuedAt && (
+                <Meta label="Emitida" value={formatDate(invoice.issuedAt)} mono />
+              )}
               <Meta label="Moneda" value={invoice.currencyCode} mono />
-              {invoice.exchangeRate !== 1 && (
+              {invoice.exchangeRate !== null && invoice.exchangeRate !== 1 && (
                 <Meta label="Tasa" value={formatExchangeRate(invoice.exchangeRate)} mono />
               )}
             </tbody>
@@ -66,11 +77,20 @@ export function InvoiceDocument({ invoice }: { invoice: Invoice }) {
         </div>
       </header>
 
-      {/* Una venta anulada no se borra del historial, pero tampoco puede salir
-          por la impresora como si siguiera viva. */}
-      {invoice.isCancelled && (
-        <p className="mt-5 border-2 border-[#DC2626] px-4 py-2 text-center text-[11pt] font-bold uppercase tracking-[0.2em] text-[#DC2626]">
-          Anulada
+      {/* Un comprobante que no esta emitido no puede salir por la impresora
+          aparentando serlo. */}
+      {!emitida && (
+        <p
+          className={cn(
+            'mt-5 border-2 px-4 py-2 text-center text-[10pt] font-bold uppercase tracking-[0.18em]',
+            anulada ? 'border-slate-500 text-slate-600' : 'border-[#DC2626] text-[#DC2626]',
+          )}
+        >
+          {anulada
+            ? 'Comprobante anulado'
+            : invoice.status === 'rejected'
+              ? 'Rechazado por la DGII · sin valor fiscal'
+              : 'Pendiente de emision · sin valor fiscal'}
         </p>
       )}
 
@@ -80,11 +100,7 @@ export function InvoiceDocument({ invoice }: { invoice: Invoice }) {
           <p className="text-[11pt] font-semibold leading-tight">{client.name}</p>
           <dl className="mt-1.5 space-y-0.5 text-[9pt] text-slate-600">
             {client.documentNumber && (
-              <Row
-                label={client.documentLabel ?? 'Documento'}
-                value={client.documentNumber}
-                mono
-              />
+              <Row label={client.documentLabel ?? 'Documento'} value={client.documentNumber} mono />
             )}
             {client.address && <Row label="Direccion" value={client.address} />}
             {client.city && <Row label="Ciudad" value={client.city} />}
@@ -95,14 +111,15 @@ export function InvoiceDocument({ invoice }: { invoice: Invoice }) {
 
         <Block title="Datos de la operacion">
           <dl className="space-y-0.5 text-[9pt] text-slate-600">
-            <Row label="Vendedor" value={invoice.salespersonName} />
-            <Row label="Emitida" value={formatCivilDateLong(invoice.saleDate)} />
+            {invoice.salespersonName && <Row label="Vendedor" value={invoice.salespersonName} />}
+            <Row label="Fecha" value={formatCivilDateLong(invoice.saleDate)} />
             {invoice.quotationNumber && (
               <Row label="Cotizacion" value={invoice.quotationNumber} mono />
             )}
             {invoice.reservationNumber && (
               <Row label="Reserva" value={invoice.reservationNumber} mono />
             )}
+            {invoice.dgiiTrackId && <Row label="TrackID DGII" value={invoice.dgiiTrackId} mono />}
           </dl>
         </Block>
       </section>
@@ -169,17 +186,68 @@ export function InvoiceDocument({ invoice }: { invoice: Invoice }) {
               </td>
             </tr>
 
-            <Total label="Pagado" value={formatMoney(totals.paid, invoice.currencyCode)} />
+            {totals.credited > 0 && (
+              <>
+                <Total
+                  label="Notas de credito"
+                  value={`− ${formatMoney(totals.credited, invoice.currencyCode)}`}
+                />
+                <tr className="border-t border-slate-900">
+                  <td className="py-1.5 font-bold uppercase tracking-wide">Neto</td>
+                  <td className="whitespace-nowrap py-1.5 text-right font-mono font-bold tabular-nums">
+                    {formatMoney(totals.net, invoice.currencyCode)}
+                  </td>
+                </tr>
+              </>
+            )}
 
-            <tr className={cn('border-t border-slate-300', hasBalance && 'text-[#DC2626]')}>
-              <td className="py-1.5 font-semibold">Saldo pendiente</td>
-              <td className="whitespace-nowrap py-1.5 text-right font-mono font-bold tabular-nums">
-                {formatMoney(totals.balance, invoice.currencyCode)}
-              </td>
-            </tr>
+            {totals.paid !== null && (
+              <Total label="Pagado" value={formatMoney(totals.paid, invoice.currencyCode)} />
+            )}
+            {totals.balance !== null && (
+              <tr className={cn('border-t border-slate-300', totals.balance > 0.004 && 'text-[#DC2626]')}>
+                <td className="py-1.5 font-semibold">Saldo pendiente</td>
+                <td className="whitespace-nowrap py-1.5 text-right font-mono font-bold tabular-nums">
+                  {formatMoney(totals.balance, invoice.currencyCode)}
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </section>
+
+      {/* --- Notas de credito emitidas ------------------------------------- */}
+      {invoice.creditNotes.length > 0 && (
+        <section className="mt-7">
+          <h2 className="text-[7.5pt] font-semibold uppercase tracking-[0.08em] text-slate-500">
+            Notas de credito aplicadas
+          </h2>
+          <table className="mt-2 w-full border-collapse text-[9pt]">
+            <thead>
+              <tr className="border-y border-slate-300 text-slate-600">
+                <Th className="text-left font-semibold">NCF</Th>
+                <Th className="text-left font-semibold">Fecha</Th>
+                <Th className="w-full text-left font-semibold">Motivo</Th>
+                <Th className="text-right font-semibold">Monto</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoice.creditNotes.map((note) => (
+                <tr key={note.id} className="border-b border-slate-200">
+                  <td className="whitespace-nowrap px-2.5 py-1.5 font-mono">{note.ncfNumber ?? '—'}</td>
+                  <td className="whitespace-nowrap px-2.5 py-1.5 font-mono tabular-nums">
+                    {note.issuedAt ? formatDate(note.issuedAt) : '—'}
+                  </td>
+                  <td className="px-2.5 py-1.5">{note.reason}</td>
+                  <td className="whitespace-nowrap px-2.5 py-1.5 text-right font-mono tabular-nums">
+                    {formatMoney(note.amount, invoice.currencyCode)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
 
       {/* --- Estado de cuenta ---------------------------------------------- */}
       {invoice.payments.length > 0 && (
@@ -192,7 +260,7 @@ export function InvoiceDocument({ invoice }: { invoice: Invoice }) {
               <tr className="border-y border-slate-300 text-slate-600">
                 <Th className="text-left font-semibold">Fecha</Th>
                 <Th className="text-left font-semibold">Metodo</Th>
-                <Th className="text-left font-semibold">Referencia</Th>
+                <Th className="w-full text-left font-semibold">Referencia</Th>
                 <Th className="text-right font-semibold">Monto</Th>
               </tr>
             </thead>
@@ -216,25 +284,16 @@ export function InvoiceDocument({ invoice }: { invoice: Invoice }) {
 
       {/* --- Firmas -------------------------------------------------------- */}
       <section className="mt-12 grid grid-cols-2 gap-12 break-inside-avoid">
-        <Signature label="Por el vendedor" hint={invoice.salespersonName} />
+        <Signature label="Por el vendedor" hint={invoice.salespersonName ?? COMPANY.name} />
         <Signature label="Recibido conforme" hint={client.name} />
       </section>
 
       {/* --- Pie ----------------------------------------------------------- */}
       <footer className="mt-8 border-t border-slate-300 pt-3 text-[7.5pt] leading-relaxed text-slate-500">
         {INVOICE_FOOTER_NOTE && <p>{INVOICE_FOOTER_NOTE}</p>}
-
-        {!HAS_FISCAL_NUMBER && (
-          // Sin NCF esto no es una factura con valor fiscal, y el papel tiene que
-          // decirlo. Callarlo es lo unico que aqui seria grave.
-          <p className="mt-1 font-semibold text-slate-700">
-            Documento interno sin valor fiscal: no lleva Numero de Comprobante Fiscal (NCF)
-            autorizado por la DGII.
-          </p>
-        )}
-
         <p className="mt-1">
-          {invoice.saleNumber} · Generado desde JFM AutoManager · {COMPANY.name}
+          {invoice.ncfNumber ?? invoice.saleNumber} · {COMPANY.name}
+          {emitida && ' · Comprobante fiscal electronico autorizado por la DGII'}
         </p>
       </footer>
     </article>

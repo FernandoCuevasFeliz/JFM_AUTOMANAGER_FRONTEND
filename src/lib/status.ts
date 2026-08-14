@@ -215,6 +215,38 @@ export function acceptsPayments(status: SaleStatus): boolean {
   return status !== 'cancelled';
 }
 
+// --- Documento fiscal (facturas y notas de credito) --------------------------
+
+/**
+ * Estado de un comprobante frente a la DGII (§6 de API.md).
+ *
+ *   pending ──► issued ──► cancelled
+ *      │  ▲        │
+ *      ▼  │        ▼
+ *   rejected ──► cancelled
+ */
+export type FiscalDocStatus = 'pending' | 'issued' | 'rejected' | 'cancelled';
+
+export const FISCAL_DOC_STATUS_META: Record<FiscalDocStatus, StatusMeta<FiscalDocStatus>> = {
+  pending: { value: 'pending', label: 'Pendiente', tone: 'amber' },
+  issued: { value: 'issued', label: 'Emitida', tone: 'green' },
+  rejected: { value: 'rejected', label: 'Rechazada', tone: 'red' },
+  cancelled: { value: 'cancelled', label: 'Anulada', tone: 'neutral' },
+};
+
+export const FISCAL_DOC_STATUSES = Object.keys(
+  FISCAL_DOC_STATUS_META,
+) as FiscalDocStatus[];
+
+/**
+ * Una venta facturada no se puede cancelar: primero hay que anular el
+ * comprobante con notas de credito que cubran su importe (§7 de API.md). La UI
+ * lo usa para explicar el orden en vez de dejar que el backend devuelva un 409.
+ */
+export function blocksSaleCancellation(status: FiscalDocStatus): boolean {
+  return status === 'pending' || status === 'issued';
+}
+
 // --- Cliente -----------------------------------------------------------------
 
 export type ClientType = 'individual' | 'company';

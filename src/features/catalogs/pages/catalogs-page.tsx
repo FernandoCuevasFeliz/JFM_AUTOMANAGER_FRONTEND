@@ -1,8 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Pencil, Plus, Tags } from 'lucide-react';
+import { Pencil, Plus, RotateCcw, Tags, Trash2 } from 'lucide-react';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 import { FormField, fieldAria } from '@/components/form-field';
 import { PageHeader } from '@/components/page-header';
 import { EmptyState, ErrorState, TableSkeleton } from '@/components/states';
@@ -54,8 +55,11 @@ import { useCreateExpenseCategory, useExpenseCategories } from '../hooks';
 /**
  * Mantenimiento de catalogos: marcas, modelos y categorias de gasto.
  *
- * Marcas y modelos **no se borran**, se desactivan: siempre hay vehiculos
- * historicos apuntando a ellos (§5.2 de API.md).
+ * "Eliminar" aqui significa **desactivar**, y no es un eufemismo: la API no
+ * expone `DELETE` para marcas ni modelos (§5.2 de API.md) porque siempre hay
+ * vehiculos historicos apuntando a ellos. Borrarlos de verdad dejaria fichas de
+ * vehiculos vendidos sin marca. Al desactivarlos desaparecen de los selectores
+ * de alta y se quedan visibles en lo ya registrado, que es lo que se busca.
  */
 export function CatalogsPage() {
   const { can } = useAuth();
@@ -95,8 +99,10 @@ export function CatalogsPage() {
 
 function BrandsPanel({ canWrite }: { canWrite: boolean }) {
   const brandsQuery = useBrands({ includeInactive: true });
+  const updateBrand = useUpdateBrand();
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<VehicleBrand | undefined>();
+  const [toDeactivate, setToDeactivate] = React.useState<VehicleBrand | null>(null);
 
   const brands = brandsQuery.data ?? [];
 
@@ -105,7 +111,10 @@ function BrandsPanel({ canWrite }: { canWrite: boolean }) {
       <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
         <div className="flex flex-col gap-1">
           <CardTitle>Marcas</CardTitle>
-          <CardDescription>Se desactivan en lugar de borrarse.</CardDescription>
+          <CardDescription>
+            Al eliminarlas dejan de ofrecerse en altas nuevas; los vehiculos que ya las usan las
+            conservan.
+          </CardDescription>
         </div>
         {canWrite && (
           <Button
@@ -150,17 +159,41 @@ function BrandsPanel({ canWrite }: { canWrite: boolean }) {
                   </TableCell>
                   <TableCell className="text-right">
                     {canWrite && (
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => {
-                          setEditing(brand);
-                          setDialogOpen(true);
-                        }}
-                        aria-label={`Editar ${brand.name}`}
-                      >
-                        <Pencil />
-                      </Button>
+                      <span className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => {
+                            setEditing(brand);
+                            setDialogOpen(true);
+                          }}
+                          aria-label={`Editar ${brand.name}`}
+                        >
+                          <Pencil />
+                        </Button>
+
+                        {brand.isActive ? (
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => setToDeactivate(brand)}
+                            aria-label={`Eliminar ${brand.name}`}
+                          >
+                            <Trash2 />
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() =>
+                              updateBrand.mutate({ id: brand.id, name: brand.name, isActive: true })
+                            }
+                            aria-label={`Reactivar ${brand.name}`}
+                          >
+                            <RotateCcw />
+                          </Button>
+                        )}
+                      </span>
                     )}
                   </TableCell>
                 </TableRow>
@@ -171,6 +204,22 @@ function BrandsPanel({ canWrite }: { canWrite: boolean }) {
       </CardContent>
 
       <BrandDialog brand={editing} open={dialogOpen} onOpenChange={setDialogOpen} />
+
+      <ConfirmDialog
+        open={toDeactivate !== null}
+        onOpenChange={(open) => !open && setToDeactivate(null)}
+        title={`Eliminar ${toDeactivate?.name ?? ''}`}
+        description="La marca deja de ofrecerse al registrar vehiculos nuevos. Los que ya la usan la conservan, asi que su historial no se rompe. Puedes reactivarla cuando quieras."
+        confirmLabel="Eliminar"
+        destructive
+        loading={updateBrand.isPending}
+        onConfirm={() => {
+          if (toDeactivate) {
+            updateBrand.mutate({ id: toDeactivate.id, name: toDeactivate.name, isActive: false });
+          }
+          setToDeactivate(null);
+        }}
+      />
     </Card>
   );
 }
@@ -269,8 +318,10 @@ function BrandDialog({
 
 function ModelsPanel({ canWrite }: { canWrite: boolean }) {
   const modelsQuery = useModels({ includeInactive: true });
+  const updateModel = useUpdateModel();
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<VehicleModel | undefined>();
+  const [toDeactivate, setToDeactivate] = React.useState<VehicleModel | null>(null);
 
   const models = modelsQuery.data ?? [];
 
@@ -326,17 +377,41 @@ function ModelsPanel({ canWrite }: { canWrite: boolean }) {
                   </TableCell>
                   <TableCell className="text-right">
                     {canWrite && (
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => {
-                          setEditing(model);
-                          setDialogOpen(true);
-                        }}
-                        aria-label={`Editar ${model.name}`}
-                      >
-                        <Pencil />
-                      </Button>
+                      <span className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => {
+                            setEditing(model);
+                            setDialogOpen(true);
+                          }}
+                          aria-label={`Editar ${model.name}`}
+                        >
+                          <Pencil />
+                        </Button>
+
+                        {model.isActive ? (
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => setToDeactivate(model)}
+                            aria-label={`Eliminar ${model.name}`}
+                          >
+                            <Trash2 />
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() =>
+                              updateModel.mutate({ id: model.id, name: model.name, isActive: true })
+                            }
+                            aria-label={`Reactivar ${model.name}`}
+                          >
+                            <RotateCcw />
+                          </Button>
+                        )}
+                      </span>
                     )}
                   </TableCell>
                 </TableRow>
@@ -347,6 +422,22 @@ function ModelsPanel({ canWrite }: { canWrite: boolean }) {
       </CardContent>
 
       <ModelDialog model={editing} open={dialogOpen} onOpenChange={setDialogOpen} />
+
+      <ConfirmDialog
+        open={toDeactivate !== null}
+        onOpenChange={(open) => !open && setToDeactivate(null)}
+        title={`Eliminar ${toDeactivate?.name ?? ''}`}
+        description="El modelo deja de ofrecerse al registrar vehiculos nuevos. Los que ya lo usan lo conservan. Puedes reactivarlo cuando quieras."
+        confirmLabel="Eliminar"
+        destructive
+        loading={updateModel.isPending}
+        onConfirm={() => {
+          if (toDeactivate) {
+            updateModel.mutate({ id: toDeactivate.id, name: toDeactivate.name, isActive: false });
+          }
+          setToDeactivate(null);
+        }}
+      />
     </Card>
   );
 }
@@ -491,6 +582,14 @@ const expenseCategorySchema = z.object({
 
 type ExpenseCategoryValues = z.infer<typeof expenseCategorySchema>;
 
+/**
+ * Categorias de gasto.
+ *
+ * Solo se pueden crear. La API expone `GET /catalogs` y
+ * `POST /catalogs/expense-categories` y nada mas: no hay `PATCH` ni `DELETE`,
+ * asi que ni editarlas ni darlas de baja es posible desde aqui. Se avisa en
+ * pantalla en vez de ofrecer un boton condenado a fallar.
+ */
 function ExpenseCategoriesPanel({ canWrite }: { canWrite: boolean }) {
   const categories = useExpenseCategories();
   const [dialogOpen, setDialogOpen] = React.useState(false);
@@ -548,6 +647,14 @@ function ExpenseCategoriesPanel({ canWrite }: { canWrite: boolean }) {
           </Table>
         )}
       </CardContent>
+
+      <div className="border-t border-border px-5 py-3">
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Las categorias de gasto solo se pueden crear: la API todavia no expone endpoints para
+          editarlas ni darlas de baja. Las marcas y los modelos si se pueden eliminar desde sus
+          pestañas.
+        </p>
+      </div>
 
       <ExpenseCategoryDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </Card>

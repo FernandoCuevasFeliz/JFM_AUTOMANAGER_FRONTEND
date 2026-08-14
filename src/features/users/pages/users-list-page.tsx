@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { KeyRound, MoreHorizontal, Pencil, Plus, Trash2, UserCog } from 'lucide-react';
 import * as React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { DataTable } from '@/components/data-table';
 import { FilterBar, FilterSelect, SearchInput } from '@/components/filter-bar';
@@ -32,6 +33,7 @@ interface UserFilters {
 const INITIAL_FILTERS: UserFilters = { search: '', roleId: undefined, isActive: undefined };
 
 export function UsersListPage() {
+  const navigate = useNavigate();
   const { can, user: currentUser } = useAuth();
   const { filters, query, hasActiveFilters, setPage, setPageSize, setFilter, resetFilters } =
     useListParams<UserFilters>(INITIAL_FILTERS);
@@ -110,7 +112,12 @@ export function UsersListPage() {
           if (!canWrite && !deletable) return null;
 
           return (
-            <div className="flex justify-end">
+            <div
+              className="flex justify-end"
+              // La fila entera navega al detalle: sin esto, abrir el menu
+              // de acciones dispararia tambien la navegacion.
+              onClick={(event) => event.stopPropagation()}
+            >
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon-sm" aria-label="Acciones">
@@ -213,6 +220,7 @@ export function UsersListPage() {
         onRetry={() => void usersQuery.refetch()}
         onPageChange={setPage}
         onPageSizeChange={setPageSize}
+        onRowClick={(row) => navigate(`/users/${row.id}`)}
         resourceLabel="usuarios"
         emptyState={
           hasActiveFilters ? (

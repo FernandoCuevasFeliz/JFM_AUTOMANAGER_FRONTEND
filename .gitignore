@@ -9,6 +9,7 @@ dist-ssr
 *.log
 .vite
 .claude/
+.agents/
 
 # Credenciales de la demo: el repositorio es publico y el despliegue esta en
 # linea, asi que subirlas daria acceso al panel a cualquiera. Si prefieres

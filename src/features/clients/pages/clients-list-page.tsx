@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal, Pencil, Plus, Trash2, Users } from 'lucide-react';
 import * as React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { DataTable } from '@/components/data-table';
 import { FilterBar, FilterSelect, SearchInput } from '@/components/filter-bar';
@@ -36,6 +37,7 @@ const INITIAL_FILTERS: ClientFilters = {
 };
 
 export function ClientsListPage() {
+  const navigate = useNavigate();
   const { can } = useAuth();
   const { filters, query, hasActiveFilters, setPage, setPageSize, setFilter, resetFilters } =
     useListParams<ClientFilters>(INITIAL_FILTERS);
@@ -115,7 +117,12 @@ export function ClientsListPage() {
           if (!canWrite && !canDelete) return null;
 
           return (
-            <div className="flex justify-end">
+            <div
+              className="flex justify-end"
+              // La fila navega al detalle: sin esto, abrir el menu de
+              // acciones dispararia tambien la navegacion.
+              onClick={(event) => event.stopPropagation()}
+            >
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon-sm" aria-label="Acciones">
@@ -205,6 +212,7 @@ export function ClientsListPage() {
         onRetry={() => void clientsQuery.refetch()}
         onPageChange={setPage}
         onPageSizeChange={setPageSize}
+        onRowClick={(row) => navigate(`/clients/${row.id}`)}
         resourceLabel="clientes"
         emptyState={
           hasActiveFilters ? (

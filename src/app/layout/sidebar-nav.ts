@@ -2,6 +2,7 @@ import {
   BadgeDollarSign,
   BookMarked,
   Car,
+  FileSpreadsheet,
   FileText,
   LayoutDashboard,
   Receipt,
@@ -64,6 +65,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: 'Cotizaciones', to: '/quotations', icon: FileText, permission: 'quotations:read' },
       { label: 'Reservas', to: '/reservations', icon: BookMarked, permission: 'reservations:read' },
       { label: 'Ventas', to: '/sales', icon: BadgeDollarSign, permission: 'sales:read' },
+      { label: 'Facturacion', to: '/invoices', icon: FileSpreadsheet, permission: 'invoices:read' },
     ],
   },
   {

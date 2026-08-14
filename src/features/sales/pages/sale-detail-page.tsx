@@ -1,4 +1,4 @@
-import { CheckCircle2, FileText, Plus, Trash2, XCircle } from 'lucide-react';
+import { CheckCircle2, Plus, Trash2, XCircle } from 'lucide-react';
 import * as React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/confirm-dialog';
@@ -8,6 +8,7 @@ import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { SaleInvoicePanel } from '@/features/billing/components/sale-invoice-panel';
 import { useAuth } from '@/features/auth/use-auth';
 import { formatCivilDate } from '@/lib/dates';
 import { formatExchangeRate, formatMoney } from '@/lib/money';
@@ -59,13 +60,6 @@ export function SaleDetailPage() {
         backLabel="Ventas"
         actions={
           <>
-            <Button variant="outline" asChild>
-              <Link to={`/sales/${sale.id}/invoice`}>
-                <FileText />
-                Factura
-              </Link>
-            </Button>
-
             {canRegisterPayment && (
               <Button onClick={() => setPaymentOpen(true)}>
                 <Plus />
@@ -199,6 +193,7 @@ export function SaleDetailPage() {
           </Card>
         </div>
 
+        <div className="flex flex-col gap-4">
         <Card className="h-fit">
           <CardHeader>
             <CardTitle>Detalles</CardTitle>
@@ -230,6 +225,9 @@ export function SaleDetailPage() {
             </dl>
           </CardContent>
         </Card>
+
+        <SaleInvoicePanel sale={sale} />
+        </div>
       </div>
 
       <PaymentDialog sale={sale} open={paymentOpen} onOpenChange={setPaymentOpen} />

@@ -24,20 +24,27 @@ const VehicleDetailPage = lazyPage(() => import('@/features/vehicles/pages/vehic
 const VehicleNewPage = lazyPage(() => import('@/features/vehicles/pages/vehicle-new-page'), 'VehicleNewPage');
 const VehicleEditPage = lazyPage(() => import('@/features/vehicles/pages/vehicle-edit-page'), 'VehicleEditPage');
 const ClientsListPage = lazyPage(() => import('@/features/clients/pages/clients-list-page'), 'ClientsListPage');
+const ClientDetailPage = lazyPage(() => import('@/features/clients/pages/client-detail-page'), 'ClientDetailPage');
 const SuppliersListPage = lazyPage(() => import('@/features/suppliers/pages/suppliers-list-page'), 'SuppliersListPage');
+const SupplierDetailPage = lazyPage(() => import('@/features/suppliers/pages/supplier-detail-page'), 'SupplierDetailPage');
 const PurchasesListPage = lazyPage(() => import('@/features/purchases/pages/purchases-list-page'), 'PurchasesListPage');
 const PurchaseDetailPage = lazyPage(() => import('@/features/purchases/pages/purchase-detail-page'), 'PurchaseDetailPage');
 const PurchaseNewPage = lazyPage(() => import('@/features/purchases/pages/purchase-form-pages'), 'PurchaseNewPage');
 const PurchaseEditPage = lazyPage(() => import('@/features/purchases/pages/purchase-form-pages'), 'PurchaseEditPage');
 const ExpensesListPage = lazyPage(() => import('@/features/expenses/pages/expenses-list-page'), 'ExpensesListPage');
+const ExpenseDetailPage = lazyPage(() => import('@/features/expenses/pages/expense-detail-page'), 'ExpenseDetailPage');
 const QuotationsListPage = lazyPage(() => import('@/features/quotations/pages/quotations-list-page'), 'QuotationsListPage');
+const QuotationDetailPage = lazyPage(() => import('@/features/quotations/pages/quotation-detail-page'), 'QuotationDetailPage');
 const ReservationsListPage = lazyPage(() => import('@/features/reservations/pages/reservations-list-page'), 'ReservationsListPage');
+const ReservationDetailPage = lazyPage(() => import('@/features/reservations/pages/reservation-detail-page'), 'ReservationDetailPage');
 const SalesListPage = lazyPage(() => import('@/features/sales/pages/sales-list-page'), 'SalesListPage');
 const SaleDetailPage = lazyPage(() => import('@/features/sales/pages/sale-detail-page'), 'SaleDetailPage');
 const SaleNewPage = lazyPage(() => import('@/features/sales/pages/sale-new-page'), 'SaleNewPage');
-const InvoicePage = lazyPage(() => import('@/features/billing/pages/invoice-page'), 'InvoicePage');
+const InvoicesListPage = lazyPage(() => import('@/features/billing/pages/invoices-list-page'), 'InvoicesListPage');
+const InvoiceDetailPage = lazyPage(() => import('@/features/billing/pages/invoice-detail-page'), 'InvoiceDetailPage');
 const CatalogsPage = lazyPage(() => import('@/features/catalogs/pages/catalogs-page'), 'CatalogsPage');
 const UsersListPage = lazyPage(() => import('@/features/users/pages/users-list-page'), 'UsersListPage');
+const UserDetailPage = lazyPage(() => import('@/features/users/pages/user-detail-page'), 'UserDetailPage');
 const ChangePasswordPage = lazyPage(() => import('@/features/auth/pages/change-password-page'), 'ChangePasswordPage');
 const SessionsPage = lazyPage(() => import('@/features/auth/pages/sessions-page'), 'SessionsPage');
 
@@ -85,13 +92,19 @@ export const router = createBrowserRouter([
           // --- Clientes -----------------------------------------------------
           {
             element: <RequirePermission permission="clients:read" />,
-            children: [{ path: 'clients', element: <ClientsListPage /> }],
+            children: [
+              { path: 'clients', element: <ClientsListPage /> },
+              { path: 'clients/:id', element: <ClientDetailPage /> },
+            ],
           },
 
           // --- Proveedores --------------------------------------------------
           {
             element: <RequirePermission permission="suppliers:read" />,
-            children: [{ path: 'suppliers', element: <SuppliersListPage /> }],
+            children: [
+              { path: 'suppliers', element: <SuppliersListPage /> },
+              { path: 'suppliers/:id', element: <SupplierDetailPage /> },
+            ],
           },
 
           // --- Compras ------------------------------------------------------
@@ -113,19 +126,28 @@ export const router = createBrowserRouter([
           // --- Gastos -------------------------------------------------------
           {
             element: <RequirePermission permission="expenses:read" />,
-            children: [{ path: 'expenses', element: <ExpensesListPage /> }],
+            children: [
+              { path: 'expenses', element: <ExpensesListPage /> },
+              { path: 'expenses/:id', element: <ExpenseDetailPage /> },
+            ],
           },
 
           // --- Cotizaciones -------------------------------------------------
           {
             element: <RequirePermission permission="quotations:read" />,
-            children: [{ path: 'quotations', element: <QuotationsListPage /> }],
+            children: [
+              { path: 'quotations', element: <QuotationsListPage /> },
+              { path: 'quotations/:id', element: <QuotationDetailPage /> },
+            ],
           },
 
           // --- Reservas -----------------------------------------------------
           {
             element: <RequirePermission permission="reservations:read" />,
-            children: [{ path: 'reservations', element: <ReservationsListPage /> }],
+            children: [
+              { path: 'reservations', element: <ReservationsListPage /> },
+              { path: 'reservations/:id', element: <ReservationDetailPage /> },
+            ],
           },
 
           // --- Ventas -------------------------------------------------------
@@ -134,14 +156,20 @@ export const router = createBrowserRouter([
             children: [
               { path: 'sales', element: <SalesListPage /> },
               { path: 'sales/:id', element: <SaleDetailPage /> },
-              // La factura es una vista de la venta, no un recurso aparte: la
-              // protege el mismo permiso y cuelga de la misma ruta.
-              { path: 'sales/:id/invoice', element: <InvoicePage /> },
             ],
           },
           {
             element: <RequirePermission permission="sales:write" />,
             children: [{ path: 'sales/new', element: <SaleNewPage /> }],
+          },
+
+          // --- Facturacion --------------------------------------------------
+          {
+            element: <RequirePermission permission="invoices:read" />,
+            children: [
+              { path: 'invoices', element: <InvoicesListPage /> },
+              { path: 'invoices/:id', element: <InvoiceDetailPage /> },
+            ],
           },
 
           // --- Catalogos ----------------------------------------------------
@@ -153,7 +181,10 @@ export const router = createBrowserRouter([
           // --- Usuarios -----------------------------------------------------
           {
             element: <RequirePermission permission="users:read" />,
-            children: [{ path: 'users', element: <UsersListPage /> }],
+            children: [
+              { path: 'users', element: <UsersListPage /> },
+              { path: 'users/:id', element: <UserDetailPage /> },
+            ],
           },
 
           // --- Cuenta propia: basta con estar autenticado --------------------

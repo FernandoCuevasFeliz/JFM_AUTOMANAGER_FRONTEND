@@ -18,6 +18,16 @@ export function useExpenses(params: ExpenseListParams) {
   });
 }
 
+export function useExpense(id: string | undefined) {
+  const { can } = useAuth();
+
+  return useQuery({
+    queryKey: queryKeys.expense(id ?? ''),
+    queryFn: () => expensesApi.getById(id as string),
+    enabled: Boolean(id) && can('expenses:read'),
+  });
+}
+
 /** Costo consolidado de una unidad. Vive bajo `reports:read`. */
 export function useVehicleCost(vehicleId: string | undefined) {
   const { can } = useAuth();

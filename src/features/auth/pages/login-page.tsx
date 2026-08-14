@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertCircle, Car, Eye, EyeOff } from 'lucide-react';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { FormField, fieldAria } from '@/components/form-field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,6 @@ import { type LoginInput, loginSchema } from '../schemas';
 export function LoginPage() {
   const { status, login } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const [showPassword, setShowPassword] = React.useState(false);
 
   const form = useForm<LoginInput>({
@@ -28,16 +27,23 @@ export function LoginPage() {
     formState: { errors, isSubmitting },
   } = form;
 
+  /*
+   * Tras iniciar sesion se va SIEMPRE al tablero, nunca a la ruta anterior.
+   *
+   * Volver a donde estabas suena bien hasta que quien inicia sesion es otra
+   * persona: el usuario anterior se quedo en /users, entra alguien del rol
+   * ventas y lo primero que ve es "no tienes acceso". El tablero exige
+   * `reports:read`, que tienen los cuatro roles, asi que siempre es un destino
+   * valido para cualquiera.
+   */
   if (status === 'authenticated') {
-    const from = (location.state as { from?: string } | null)?.from;
-    return <Navigate to={from ?? '/'} replace />;
+    return <Navigate to="/" replace />;
   }
 
   const onSubmit = handleSubmit(async (values) => {
     try {
       await login(values);
-      const from = (location.state as { from?: string } | null)?.from;
-      navigate(from ?? '/', { replace: true });
+      navigate('/', { replace: true });
     } catch (error) {
       // El backend no distingue si el correo existe: el 401 se muestra como
       // un error general del formulario, no atribuido a un campo.

@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { CalendarClock, FileText, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
 import * as React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { DataTable } from '@/components/data-table';
 import { FilterBar, FilterSelect, SearchInput } from '@/components/filter-bar';
@@ -53,6 +53,7 @@ const INITIAL_FILTERS: QuotationFilters = {
 };
 
 export function QuotationsListPage() {
+  const navigate = useNavigate();
   const { can } = useAuth();
   const { filters, query, hasActiveFilters, setPage, setPageSize, setFilter, resetFilters } =
     useListParams<QuotationFilters>(INITIAL_FILTERS);
@@ -144,7 +145,12 @@ export function QuotationsListPage() {
           if (transitions.length === 0 && !editable && !deletable) return null;
 
           return (
-            <div className="flex justify-end">
+            <div
+              className="flex justify-end"
+              // La fila entera navega al detalle: sin esto, abrir el menu
+              // de acciones dispararia tambien la navegacion.
+              onClick={(event) => event.stopPropagation()}
+            >
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon-sm" aria-label="Acciones">
@@ -266,6 +272,7 @@ export function QuotationsListPage() {
         onRetry={() => void quotationsQuery.refetch()}
         onPageChange={setPage}
         onPageSizeChange={setPageSize}
+        onRowClick={(row) => navigate(`/quotations/${row.id}`)}
         resourceLabel="cotizaciones"
         emptyState={
           hasActiveFilters ? (

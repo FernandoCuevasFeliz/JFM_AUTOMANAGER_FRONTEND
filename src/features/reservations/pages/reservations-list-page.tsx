@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { BookMarked, CalendarClock, MoreHorizontal, Pencil, Plus, XCircle } from 'lucide-react';
 import * as React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { DataTable } from '@/components/data-table';
 import { FilterBar, FilterSelect, SearchInput } from '@/components/filter-bar';
@@ -38,6 +38,7 @@ interface ReservationFilters {
 const INITIAL_FILTERS: ReservationFilters = { search: '', status: undefined };
 
 export function ReservationsListPage() {
+  const navigate = useNavigate();
   const { can } = useAuth();
   const { filters, query, hasActiveFilters, setPage, setPageSize, setFilter, resetFilters } =
     useListParams<ReservationFilters>(INITIAL_FILTERS);
@@ -141,7 +142,12 @@ export function ReservationsListPage() {
           if (!editable && !cancellable) return null;
 
           return (
-            <div className="flex justify-end">
+            <div
+              className="flex justify-end"
+              // La fila entera navega al detalle: sin esto, abrir el menu
+              // de acciones dispararia tambien la navegacion.
+              onClick={(event) => event.stopPropagation()}
+            >
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon-sm" aria-label="Acciones">
@@ -241,6 +247,7 @@ export function ReservationsListPage() {
         onRetry={() => void reservationsQuery.refetch()}
         onPageChange={setPage}
         onPageSizeChange={setPageSize}
+        onRowClick={(row) => navigate(`/reservations/${row.id}`)}
         resourceLabel="reservas"
         emptyState={
           hasActiveFilters ? (

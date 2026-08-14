@@ -26,6 +26,7 @@ import { useVehiclesSummary } from '@/features/vehicles/hooks';
 import { formatCivilMonth } from '@/lib/dates';
 import { formatMoney, formatMoneyCompact, formatNumber } from '@/lib/money';
 import { VEHICLE_STATUS_META, type VehicleStatus } from '@/lib/status';
+import { userAccent, userAccentStyle } from '@/lib/user-accent';
 import { cn } from '@/lib/utils';
 import { useMonthlySales } from '../hooks';
 
@@ -72,6 +73,7 @@ const STATUS_COLORS: Record<VehicleStatus, string> = {
 
 export function DashboardPage() {
   const { user } = useAuth();
+  const accent = userAccent(user?.id);
 
   const vehiclesSummary = useVehiclesSummary();
   const salesSummary = useSalesSummary();
@@ -95,12 +97,34 @@ export function DashboardPage() {
   }));
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader
-        eyebrow="Tablero"
-        title={`Hola, ${user?.firstName ?? ''}`}
-        description="Resumen del inventario y del desempeno comercial."
-      />
+    /*
+     * El acento personal solo vive dentro del tablero: identifica la sesion sin
+     * repintar la aplicacion entera, que seguiria siendo grafito y rojo para
+     * todo el mundo.
+     */
+    <div className="flex flex-col gap-6" style={userAccentStyle(user?.id)}>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <PageHeader
+          eyebrow="Tablero"
+          title={`Hola, ${user?.firstName ?? ''}`}
+          description="Resumen del inventario y del desempeno comercial."
+        />
+
+        <span
+          className="flex shrink-0 items-center gap-2.5 rounded-full border border-border bg-[var(--user-accent-soft)] py-1.5 pl-1.5 pr-3.5"
+          title={`Color de sesion: ${accent.name}`}
+        >
+          <span className="flex size-7 items-center justify-center rounded-full bg-[var(--user-accent)] text-[11px] font-semibold text-white">
+            {`${user?.firstName?.charAt(0) ?? ''}${user?.lastName?.charAt(0) ?? ''}`.toUpperCase()}
+          </span>
+          <span className="flex flex-col leading-none">
+            <span className="text-[13px] font-medium">
+              {user?.firstName} {user?.lastName}
+            </span>
+            <span className="label-micro mt-0.5 text-muted-foreground">{user?.roleName}</span>
+          </span>
+        </span>
+      </div>
 
       {/* --- Tarjetas de cabecera --- */}
       {vehiclesSummary.isLoading || salesSummary.isLoading ? (
@@ -319,7 +343,7 @@ function MetricCard({
           'absolute inset-x-0 top-0 h-0.5',
           tone === 'positive' && 'bg-success',
           tone === 'warning' && 'bg-warning',
-          tone === 'neutral' && 'bg-border',
+          tone === 'neutral' && 'bg-[var(--user-accent,var(--border))]',
         )}
       />
 

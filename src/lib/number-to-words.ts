@@ -156,10 +156,10 @@ export function moneyToWords(amount: number, currencyCode: string): string {
   const whole = Math.floor(totalCents / 100);
   const cents = totalCents % 100;
 
-  const names = CURRENCY_NAMES[currencyCode] ?? {
-    one: currencyCode,
-    many: currencyCode,
-  };
+  // Una moneda desconocida se nombra por su codigo; sin el fallback, un
+  // `currencyCode` vacio imprimia "CERO UNDEFINED" en el importe en letras.
+  const fallback = currencyCode?.trim() || 'unidades';
+  const names = CURRENCY_NAMES[currencyCode] ?? { one: fallback, many: fallback };
   const unit = whole === 1 ? names.one : names.many;
 
   /*

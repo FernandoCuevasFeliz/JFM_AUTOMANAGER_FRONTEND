@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/features/auth/use-auth';
 import { useTheme } from '@/lib/use-theme';
+import { roleAccent, roleAccentStyle, userAccent } from '@/lib/user-accent';
 import { cn } from '@/lib/utils';
 import { BRAND_ICON, NAV_GROUPS } from './sidebar-nav';
 
@@ -76,6 +77,12 @@ export function AppShell() {
     return matches.sort((a, b) => b.to.length - a.to.length)[0];
   }, [groups, location.pathname]);
 
+  // Dos señales distintas y complementarias: el color del USUARIO identifica a
+  // la persona (avatar, tablero) y el del ROL tiñe el sidebar para que se vea
+  // desde cualquier pantalla con que permisos se esta trabajando.
+  const accent = userAccent(user?.id);
+  const role = roleAccent(user?.roleName);
+
   const initials = user
     ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()
     : '?';
@@ -105,10 +112,14 @@ export function AppShell() {
           mobileOpen ? 'translate-x-0' : '-translate-x-full',
         )}
         aria-label="Navegacion principal"
+        style={roleAccentStyle(user?.roleName)}
       >
         <div className="flex h-14 items-center justify-between gap-2 border-b border-sidebar-border px-4">
           <Link to="/" className="group flex items-center gap-2.5 rounded-md">
-            <span className="flex size-8 items-center justify-center rounded-md bg-signal text-signal-foreground shadow-xs">
+            <span
+              className="flex size-8 items-center justify-center rounded-md text-white shadow-xs"
+              style={{ backgroundColor: role.rail }}
+            >
               <BRAND_ICON className="size-4.5" aria-hidden />
             </span>
             <span className="flex flex-col leading-none">
@@ -148,7 +159,7 @@ export function AppShell() {
                           'before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px]',
                           'before:-translate-y-1/2 before:rounded-r-full before:transition-colors',
                           isActive
-                            ? 'bg-sidebar-accent text-sidebar-accent-foreground before:bg-signal'
+                            ? 'bg-sidebar-accent text-sidebar-accent-foreground before:bg-[var(--role-rail)]'
                             : 'text-sidebar-foreground before:bg-transparent hover:bg-sidebar-accent/55 hover:text-sidebar-accent-foreground',
                         )
                       }
@@ -163,7 +174,15 @@ export function AppShell() {
           ))}
         </nav>
 
-        <div className="border-t border-sidebar-border px-4 py-3">
+        <div className="flex flex-col gap-2 border-t border-sidebar-border px-4 py-3">
+          <span className="flex items-center gap-2">
+            <span
+              className="size-2 shrink-0 rounded-full"
+              style={{ backgroundColor: role.rail }}
+              aria-hidden
+            />
+            <span className="label-micro text-sidebar-accent-foreground">{role.label}</span>
+          </span>
           <p className="label-micro text-sidebar-muted">JFM AutoManager · v1.0</p>
         </div>
       </aside>
@@ -197,7 +216,12 @@ export function AppShell() {
               <DropdownMenuTrigger asChild>
                 <button className="hit-target flex cursor-pointer items-center gap-2 rounded-md py-1 pl-1 pr-2 text-left transition-colors hover:bg-accent">
                   <Avatar>
-                    <AvatarFallback>{initials}</AvatarFallback>
+                    <AvatarFallback
+                      className="text-white"
+                      style={{ backgroundColor: accent.color }}
+                    >
+                      {initials}
+                    </AvatarFallback>
                   </Avatar>
                   <span className="hidden flex-col leading-tight sm:flex">
                     <span className="text-[13px] font-medium">

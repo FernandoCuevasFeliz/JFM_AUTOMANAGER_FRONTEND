@@ -18,6 +18,16 @@ export function useUsers(params: UserListParams) {
   });
 }
 
+export function useUser(id: string | undefined) {
+  const { can } = useAuth();
+
+  return useQuery({
+    queryKey: queryKeys.user(id ?? ''),
+    queryFn: () => usersApi.getById(id as string),
+    enabled: Boolean(id) && can('users:read'),
+  });
+}
+
 export function useRoles() {
   const { can } = useAuth();
 

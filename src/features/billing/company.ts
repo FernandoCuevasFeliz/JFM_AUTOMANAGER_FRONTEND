@@ -1,10 +1,10 @@
 /**
  * Datos del emisor y reglas fiscales de la factura.
  *
- * Nada de esto lo expone la API (§5 de API.md no tiene modulo de facturacion),
- * asi que viaja por variables de entorno. Es a proposito: el RNC, la direccion
- * o la tasa de ITBIS cambian sin tocar codigo, y el mismo build sirve para
- * pruebas y para produccion.
+ * El NCF y el estado fiscal los gobierna el backend (§5.12 de API.md). Lo que
+ * queda aqui es lo que la API no modela: la identidad del emisor y el desglose
+ * de impuesto del papel. Viaja por variables de entorno para que el RNC, la
+ * direccion o la tasa cambien sin tocar codigo.
  */
 
 function env(key: string, fallback = ''): string {
@@ -54,15 +54,6 @@ export const TAX_LABEL: string = env('VITE_INVOICE_TAX_LABEL', 'ITBIS');
  * con el cliente; sumarle un 18 % por encima cambiaria lo que se cobra.
  */
 export const TAX_INCLUDED: boolean = env('VITE_INVOICE_TAX_INCLUDED', 'true') !== 'false';
-
-/**
- * Numero de Comprobante Fiscal. La secuencia la autoriza la DGII y la lleva el
- * backend, que hoy no la tiene: si no se configura, el documento se imprime
- * rotulado como comprobante interno y no como factura con valor fiscal.
- */
-export const NCF: string = env('VITE_INVOICE_NCF');
-
-export const HAS_FISCAL_NUMBER: boolean = NCF.length > 0;
 
 export const INVOICE_FOOTER_NOTE: string = env(
   'VITE_INVOICE_FOOTER_NOTE',
