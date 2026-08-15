@@ -11,26 +11,26 @@ import {
   YAxis,
 } from 'recharts';
 import { PrintChart } from '@/components/print-chart';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  CHART_AXIS_TICK,
-  CHART_GRID,
-  CHART_LEGEND_STYLE,
-  CHART_TOOLTIP_STYLE,
-  seriesColor,
-} from '@/lib/chart-theme';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { CHART_GRID, CHART_TOOLTIP_STYLE, seriesColor, useChartStyles } from '@/lib/chart-theme';
 import { formatCivilMonth } from '@/lib/dates';
 import { formatMoney, formatMoneyCompact, formatNumber } from '@/lib/money';
 import { MonthRangeFilter, ReportCard, ReportTotals } from './report-shell';
 import { useMonthlySalesReport, useSalesBySalesperson } from '../hooks';
-import {
-  REPORT_CURRENCY,
-  type MonthRangeParams,
-  monthKey,
-  sumConverted,
-} from '../types';
+import { REPORT_CURRENCY, type MonthRangeParams, monthKey, sumConverted } from '../types';
 
 export function SalesPanel() {
+  // Ejes y leyenda encogen al imprimir, y por props: recharts coloca cada
+  // etiqueta a partir del tamaño que recibe aqui.
+  const { axisTick, legendStyle, isAnimationActive } = useChartStyles();
+
   const [range, setRange] = React.useState<MonthRangeParams>({});
 
   const monthly = useMonthlySalesReport(range);
@@ -49,7 +49,11 @@ export function SalesPanel() {
 
     for (const row of monthlyRows) {
       const clave = monthKey(row.month);
-      const actual = mapa.get(clave) ?? { label: formatCivilMonth(clave), total: 0, ventas: 0 };
+      const actual = mapa.get(clave) ?? {
+        label: formatCivilMonth(clave),
+        total: 0,
+        ventas: 0,
+      };
       actual.total += row.totalAmountConverted;
       actual.ventas += row.salesCount;
       mapa.set(clave, actual);
@@ -57,7 +61,10 @@ export function SalesPanel() {
 
     return [...mapa.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([, value]) => ({ ...value, total: Math.round(value.total * 100) / 100 }));
+      .map(([, value]) => ({
+        ...value,
+        total: Math.round(value.total * 100) / 100,
+      }));
   }, [monthlyRows]);
 
   /** Un vendedor puede aparecer en varios meses y monedas: se pliega igual. */
@@ -88,10 +95,19 @@ export function SalesPanel() {
 
       <ReportTotals
         items={[
-          { label: `Facturado (${REPORT_CURRENCY})`, value: formatMoney(facturado, REPORT_CURRENCY) },
+          {
+            label: `Facturado (${REPORT_CURRENCY})`,
+            value: formatMoney(facturado, REPORT_CURRENCY),
+          },
           { label: 'Operaciones', value: formatNumber(operaciones) },
-          { label: 'Ticket promedio', value: formatMoney(ticket, REPORT_CURRENCY) },
-          { label: 'Vendedores activos', value: formatNumber(porVendedor.length) },
+          {
+            label: 'Ticket promedio',
+            value: formatMoney(ticket, REPORT_CURRENCY),
+          },
+          {
+            label: 'Vendedores activos',
+            value: formatNumber(porVendedor.length),
+          },
         ]}
       />
 
@@ -107,9 +123,9 @@ export function SalesPanel() {
         <PrintChart height={300}>
           <BarChart data={porMes} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
             <CartesianGrid {...CHART_GRID} />
-            <XAxis dataKey="label" tick={CHART_AXIS_TICK} tickLine={false} axisLine={false} />
+            <XAxis dataKey="label" tick={axisTick} tickLine={false} axisLine={false} />
             <YAxis
-              tick={CHART_AXIS_TICK}
+              tick={axisTick}
               tickLine={false}
               axisLine={false}
               tickFormatter={(value: number) => formatMoneyCompact(value)}
@@ -119,7 +135,13 @@ export function SalesPanel() {
               contentStyle={CHART_TOOLTIP_STYLE}
               formatter={(value: number) => [formatMoney(value, REPORT_CURRENCY), 'Facturado']}
             />
-            <Bar dataKey="total" name="Facturado" fill={seriesColor(0)} radius={[3, 3, 0, 0]} />
+            <Bar
+              dataKey="total"
+              name="Facturado"
+              fill={seriesColor(0)}
+              radius={[3, 3, 0, 0]}
+              isAnimationActive={isAnimationActive}
+            />
           </BarChart>
         </PrintChart>
       </ReportCard>
@@ -137,9 +159,9 @@ export function SalesPanel() {
         <PrintChart height={220}>
           <LineChart data={porMes} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
             <CartesianGrid {...CHART_GRID} />
-            <XAxis dataKey="label" tick={CHART_AXIS_TICK} tickLine={false} axisLine={false} />
+            <XAxis dataKey="label" tick={axisTick} tickLine={false} axisLine={false} />
             <YAxis
-              tick={CHART_AXIS_TICK}
+              tick={axisTick}
               tickLine={false}
               axisLine={false}
               allowDecimals={false}
@@ -150,6 +172,7 @@ export function SalesPanel() {
               formatter={(value: number) => [`${value} ventas`, 'Ventas']}
             />
             <Line
+              isAnimationActive={isAnimationActive}
               type="monotone"
               dataKey="ventas"
               stroke={seriesColor(1)}
@@ -181,7 +204,7 @@ export function SalesPanel() {
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
               <XAxis
                 type="number"
-                tick={CHART_AXIS_TICK}
+                tick={axisTick}
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(value: number) => formatMoneyCompact(value)}
@@ -189,7 +212,7 @@ export function SalesPanel() {
               <YAxis
                 type="category"
                 dataKey="nombre"
-                tick={CHART_AXIS_TICK}
+                tick={axisTick}
                 tickLine={false}
                 axisLine={false}
                 width={140}
@@ -198,8 +221,14 @@ export function SalesPanel() {
                 contentStyle={CHART_TOOLTIP_STYLE}
                 formatter={(value: number) => [formatMoney(value, REPORT_CURRENCY), 'Facturado']}
               />
-              <Legend wrapperStyle={CHART_LEGEND_STYLE} iconType="circle" iconSize={8} />
-              <Bar dataKey="total" name="Facturado" fill={seriesColor(0)} radius={[0, 3, 3, 0]} />
+              <Legend wrapperStyle={legendStyle} iconType="circle" iconSize={8} />
+              <Bar
+                dataKey="total"
+                name="Facturado"
+                fill={seriesColor(0)}
+                radius={[0, 3, 3, 0]}
+                isAnimationActive={isAnimationActive}
+              />
             </BarChart>
           </PrintChart>
 

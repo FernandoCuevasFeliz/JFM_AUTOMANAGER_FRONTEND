@@ -12,7 +12,14 @@ import { cn } from '@/lib/utils';
  * fondos, que por defecto descarta para ahorrar tinta.
  */
 
-/** Hoja A4 con los margenes del documento. */
+/**
+ * Hoja CARTA (8.5 × 11 pulgadas) con los margenes del documento.
+ *
+ * El ancho y el relleno coinciden con `@page` en `index.css` —216mm y 12mm— para
+ * que la previsualizacion en pantalla sea milimetro a milimetro lo que sale por
+ * la impresora. Cuando no coincidian, el navegador reescalaba la maqueta al
+ * papel real y el documento salia corrido.
+ */
 export function PrintSheet({
   children,
   className,
@@ -23,7 +30,7 @@ export function PrintSheet({
   return (
     <article
       className={cn(
-        'invoice-sheet mx-auto w-full max-w-[210mm] bg-white p-[14mm]',
+        'invoice-sheet mx-auto w-full max-w-[216mm] bg-white p-[12mm]',
         'text-[10.5pt] leading-snug text-slate-900',
         className,
       )}

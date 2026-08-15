@@ -13,6 +13,7 @@ import { useClient } from '@/features/clients/hooks';
 import { useVehicle } from '@/features/vehicles/hooks';
 import { daysUntilCivil, formatCivilDate, formatDateTime, isPastCivil } from '@/lib/dates';
 import { formatMoney } from '@/lib/money';
+import { imprimirPagina } from '@/lib/use-print-mode';
 import {
   QUOTATION_STATUS_META,
   assignableQuotationStatuses,
@@ -72,7 +73,7 @@ export function QuotationDetailPage() {
           backLabel="Cotizaciones"
           actions={
             <>
-              <Button variant="outline" onClick={() => window.print()} loading={cargando}>
+              <Button variant="outline" onClick={imprimirPagina} loading={cargando}>
                 <Printer />
                 Imprimir
               </Button>

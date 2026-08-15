@@ -288,27 +288,140 @@
 /*
  * Impresion
  * ---------------------------------------------------------------------------
- * El panel no se imprime; los documentos si. Todo lo que es cromo de la
- * aplicacion lleva `print:hidden` en su componente, y aqui se ajusta la hoja.
+ * El panel no se imprime; los documentos y los reportes si. Todo lo que es
+ * cromo de la aplicacion lleva `print:hidden` en su componente, y aqui se
+ * ajusta la hoja para TODO lo que salga por la impresora.
  */
 @media print {
+  /*
+   * Carta (8.5 × 11 pulgadas), no A4.
+   *
+   * Es el tamaño de oficina en Republica Dominicana y el que hay cargado en las
+   * bandejas. Con `size: A4` el navegador escalaba la maqueta para encajarla en
+   * el papel real: de ahi las lineas corridas, los margenes desiguales y las
+   * tablas que terminaban media pulgada fuera.
+   */
   @page {
-    size: A4;
+    size: Letter portrait;
     /*
-     * Margenes reales. Antes esto era `margin: 0` porque la factura pone sus
-     * propios 14mm, pero eso dejaba SIN MARGEN a todo lo demas que se imprime
-     * —los reportes salian pegados al borde del papel—. Ahora el margen lo pone
-     * la pagina y la hoja del documento anula su relleno, asi que los dos casos
-     * quedan bien.
+     * El margen lo pone la pagina, no cada documento: asi la factura, la
+     * cotizacion y los reportes comparten el mismo blanco alrededor. Las hojas
+     * de documento anulan su relleno mas abajo para no duplicarlo.
      */
     margin: 12mm;
+  }
+
+  /*
+   * El papel siempre es tema claro.
+   *
+   * Forzar el color del <body> no alcanzaba: casi todo el panel pinta con
+   * `text-muted-foreground`, `bg-card`, `border-border` o `var(--chart-N)`, y en
+   * modo oscuro esos tokens son grises claros que sobre blanco no se leen —el
+   * reporte salia "sucio", con texto fantasma y graficas lavadas—. Se
+   * reescriben los TOKENS, no las reglas, asi que toda la aplicacion imprime en
+   * claro sin que ningun componente tenga que enterarse.
+   */
+  :root,
+  :root[data-theme='dark'] {
+    color-scheme: light;
+
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.208 0.042 265);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.208 0.042 265);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.208 0.042 265);
+
+    --primary: oklch(0.279 0.041 260);
+    --primary-foreground: oklch(1 0 0);
+    --secondary: oklch(0.955 0.006 250);
+    --secondary-foreground: oklch(0.279 0.041 260);
+
+    --muted: oklch(0.968 0.006 250);
+    /* Un punto mas oscuro que en pantalla: la tinta gris clara no se lee. */
+    --muted-foreground: oklch(0.42 0.043 257);
+    --accent: oklch(0.96 0.008 252);
+    --accent-foreground: oklch(0.279 0.041 260);
+
+    --signal: oklch(0.55 0.245 27.3);
+    --destructive: oklch(0.55 0.245 27.3);
+    --danger: oklch(0.505 0.225 27.3);
+    --success: oklch(0.5 0.135 163);
+    --warning: oklch(0.5 0.145 58);
+
+    --border: oklch(0.84 0.013 253);
+    --input: oklch(0.7 0.032 255);
+
+    --chart-1: oklch(0.45 0.055 255);
+    --chart-2: oklch(0.55 0.135 163);
+    --chart-3: oklch(0.66 0.16 62);
+    --chart-4: oklch(0.55 0.235 27.3);
+    --chart-5: oklch(0.5 0.16 295);
   }
 
   html,
   body {
     background: #fff !important;
-    /* El tema oscuro no puede llegar al papel bajo ninguna circunstancia. */
-    color: #0f172a !important;
+    color: var(--foreground) !important;
+  }
+
+  /*
+   * Los fondos son informacion: el color de una serie, el de un badge de estado
+   * o la cabecera negra del detalle de la factura. Por defecto el navegador los
+   * descarta para ahorrar tinta y el reporte sale en blanco y negro sin sentido.
+   *
+   * De paso se van las sombras y el desenfoque: en papel no elevan nada, solo
+   * ensucian con una banda gris.
+   */
+  *,
+  *::before,
+  *::after {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  /*
+   * Ninguna caja con scroll.
+   *
+   * Esta era la causa real de los reportes cortados: la tabla del panel vive
+   * dentro de un `max-height: 70dvh; overflow: auto`, y una caja con scroll
+   * imprime SOLO lo que se ve —el resto de las filas simplemente no existian en
+   * el papel—. En impresion el contenido tiene que fluir y partirse entre
+   * hojas, nunca recortarse.
+   */
+  [class*='overflow-'],
+  [class*='max-h-'] {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  /* Una cabecera pegajosa se queda flotando sobre el texto de la hoja. */
+  .sticky,
+  .fixed {
+    position: static !important;
+  }
+
+  /*
+   * Lo efimero no es el documento: un aviso de «Guardado», un menu desplegado o
+   * un dialogo a medio abrir se colaban en la hoja como un recuadro sin
+   * contexto. En papel no existen.
+   */
+  [data-sonner-toaster],
+  [data-radix-popper-content-wrapper],
+  [role='dialog'],
+  [role='alertdialog'],
+  [role='tooltip'] {
+    display: none !important;
+  }
+
+  /* En papel el texto cabe entero: envolver es mejor que cortar con puntos. */
+  .truncate {
+    overflow: visible !important;
+    white-space: normal !important;
+    text-overflow: clip !important;
   }
 
   /* Una tabla partida a la mitad entre dos hojas es ilegible. */
@@ -328,7 +441,12 @@
     width: 100% !important;
     max-width: none !important;
     padding: 0 !important;
-    box-shadow: none !important;
+  }
+
+  /* La cabecera con el logo nunca se queda sola al final de una hoja. */
+  .print-letterhead {
+    break-after: avoid;
+    break-inside: avoid;
   }
 
   /*
@@ -345,10 +463,46 @@
     break-inside: avoid;
   }
 
-  /* Cada bloque de reporte entero en una hoja, y sin sombras ni relleno gris. */
+  /*
+   * Red de seguridad contra el escalado.
+   *
+   * Recharts trae `.recharts-surface { width: 100% }`. Si una grafica llegase a
+   * la impresion con el `width` de pantalla en el `<svg>` —su `viewBox` intacto
+   * dentro de una caja del ancho de la hoja—, esa regla la encoge al 48 %:
+   * dibujo Y texto. Los ejes, calculados para 11px, acaban pintados a 5px,
+   * ilegibles y pegados a las barras.
+   *
+   * Con `width: auto` el `<svg>` usa su tamaño real: si algo va mal se
+   * desbordara y se recortara, que se ve y se arregla, en vez de salir
+   * miniaturizado y pasar por bueno.
+   */
+  .recharts-surface {
+    width: auto !important;
+    height: auto !important;
+  }
+
+  /*
+   * NADA del tamaño ni de la colocacion de las graficas se decide aqui.
+   *
+   * Se intento encoger las marcas del eje con `font-size: 8px !important` y
+   * descoloco las etiquetas bajo las barras: recharts calcula donde va cada una
+   * midiendo el texto con el tamaño que recibe por PROPS, asi que reducirlo solo
+   * en el pintado deja el texto fuera del hueco que se le habia reservado. Lo
+   * mismo vale para la leyenda, cuyo alto recharts mide del DOM.
+   *
+   * El tamaño de impresion viaja por props: `useChartStyles()` en
+   * `chart-theme.ts`, que se entera de la impresion por `usePrintMode()`.
+   */
+
+  /*
+   * Cada bloque de reporte entero en una hoja y con acabado de papel: sin
+   * esquinas redondeadas ni fondo tintado, que en tinta se ven como una mancha.
+   */
   .report-block {
     break-inside: avoid;
-    box-shadow: none !important;
+    border-radius: 0 !important;
+    border-color: oklch(0.82 0.013 253) !important;
+    background: #fff !important;
   }
 
   /* En papel no hay dos columnas: el ancho util es la mitad que en pantalla. */
@@ -357,7 +511,7 @@
   }
 
   .print-stack > * + * {
-    margin-top: 12px;
+    margin-top: 10px;
   }
 }
 

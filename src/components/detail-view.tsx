@@ -100,11 +100,13 @@ export function DetailAmount({
   tone?: 'neutral' | 'positive' | 'warning' | 'danger';
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <span className="label-micro text-muted-foreground">{label}</span>
+    // En papel la cifra baja de 20px a 10pt: cuatro de estas caben a lo ancho
+    // de una carta, y a tamaño de pantalla el importe se partia en dos lineas.
+    <div className="flex flex-col gap-1.5 print:gap-1">
+      <span className="label-micro text-muted-foreground print:text-[6.5pt]">{label}</span>
       <span
         className={cn(
-          'num text-xl font-semibold leading-none',
+          'num text-xl font-semibold leading-none print:text-[10pt]',
           tone === 'positive' && 'text-success',
           tone === 'warning' && 'text-warning',
           tone === 'danger' && 'text-danger',

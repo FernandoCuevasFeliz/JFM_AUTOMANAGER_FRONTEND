@@ -114,6 +114,11 @@ export function DataTable<TData>({
       <div
         className={cn(
           'overflow-hidden rounded-xl border border-border bg-card shadow-card transition-opacity duration-150',
+          // `overflow-hidden` recorta la tabla en papel y la esquina redondeada
+          // no significa nada impresa: en la hoja es un recuadro y ya. No lleva
+          // `report-block`: un listado largo TIENE que poder partirse entre
+          // hojas, y `break-inside: avoid` lo dejaria colgando en una sola.
+          'print:overflow-visible print:rounded-none',
           // Al cambiar de pagina o filtro se atenua en vez de vaciarse.
           isFetching && 'opacity-60',
         )}
@@ -155,14 +160,19 @@ export function DataTable<TData>({
 
       {meta && (
         <div className="flex flex-col-reverse items-start justify-between gap-3 px-1 sm:flex-row sm:items-center">
-          <p className="text-xs text-muted-foreground">
+          {/*
+            El recuento SI se imprime —dice que la hoja es una pagina de un
+            listado mas largo, no el total del negocio—; los controles no, que
+            en papel un boton es solo un rectangulo gris.
+          */}
+          <p className="text-xs text-muted-foreground print:text-[8pt]">
             Mostrando <span className="num font-medium text-foreground">{formatNumber(from)}</span>–
             <span className="num font-medium text-foreground">{formatNumber(to)}</span> de{' '}
             <span className="num font-medium text-foreground">{formatNumber(total)}</span>{' '}
             {resourceLabel}
           </p>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 print:hidden">
             {onPageSizeChange && (
               <div className="flex items-center gap-2">
                 <span className="label-micro text-muted-foreground">Por pagina</span>

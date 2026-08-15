@@ -5,6 +5,7 @@ import { EmptyState, ErrorState } from '@/components/states';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatCivilDate } from '@/lib/dates';
 import { cn } from '@/lib/utils';
 import type { MonthRangeParams } from '../types';
 
@@ -14,6 +15,14 @@ import type { MonthRangeParams } from '../types';
  * Los cinco paneles repiten la misma coreografia —filtro de rango, estado de
  * carga, error, vacio y un bloque de totales— asi que vive aqui una sola vez.
  */
+
+/** El rango elegido, en prosa. En papel no hay controles: hay una frase. */
+function describeRange({ dateFrom, dateTo }: MonthRangeParams): string {
+  if (dateFrom && dateTo) return `${formatCivilDate(dateFrom)} — ${formatCivilDate(dateTo)}`;
+  if (dateFrom) return `desde ${formatCivilDate(dateFrom)}`;
+  if (dateTo) return `hasta ${formatCivilDate(dateTo)}`;
+  return 'todo el historico registrado';
+}
 
 /** Rango de meses. El backend lleva cualquier dia al mes al que pertenece. */
 export function MonthRangeFilter({
@@ -27,30 +36,42 @@ export function MonthRangeFilter({
   children?: React.ReactNode;
 }) {
   return (
-    <div
-      className="flex flex-col gap-2.5 rounded-xl border border-border bg-card p-2.5 shadow-card sm:flex-row sm:flex-wrap sm:items-center print:hidden"
-      role="search"
-    >
-      <span className="label-micro shrink-0 pl-1 text-muted-foreground">Periodo</span>
+    <>
+      <div
+        className="flex flex-col gap-2.5 rounded-xl border border-border bg-card p-2.5 shadow-card sm:flex-row sm:flex-wrap sm:items-center print:hidden"
+        role="search"
+      >
+        <span className="label-micro shrink-0 pl-1 text-muted-foreground">Periodo</span>
 
-      <Input
-        type="date"
-        aria-label="Desde"
-        value={value.dateFrom ?? ''}
-        onChange={(event) => onChange({ ...value, dateFrom: event.target.value || undefined })}
-        className="w-full sm:w-40"
-      />
-      <span className="hidden text-sm text-muted-foreground sm:inline">a</span>
-      <Input
-        type="date"
-        aria-label="Hasta"
-        value={value.dateTo ?? ''}
-        onChange={(event) => onChange({ ...value, dateTo: event.target.value || undefined })}
-        className="w-full sm:w-40"
-      />
+        <Input
+          type="date"
+          aria-label="Desde"
+          value={value.dateFrom ?? ''}
+          onChange={(event) => onChange({ ...value, dateFrom: event.target.value || undefined })}
+          className="w-full sm:w-40"
+        />
+        <span className="hidden text-sm text-muted-foreground sm:inline">a</span>
+        <Input
+          type="date"
+          aria-label="Hasta"
+          value={value.dateTo ?? ''}
+          onChange={(event) => onChange({ ...value, dateTo: event.target.value || undefined })}
+          className="w-full sm:w-40"
+        />
 
-      {children}
-    </div>
+        {children}
+      </div>
+
+      {/*
+        El filtro desaparece al imprimir, pero el rango que produjo las cifras
+        no: sin el, la hoja es una tabla de numeros sin fecha y no se puede
+        archivar ni comparar con otra.
+      */}
+      <p className="hidden text-[8.5pt] leading-snug text-slate-600 print:block">
+        <span className="font-semibold uppercase tracking-[0.06em] text-slate-500">Periodo:</span>{' '}
+        {describeRange(value)}
+      </p>
+    </>
   );
 }
 
@@ -89,16 +110,25 @@ export function ReportCard({
   className?: string;
 }) {
   return (
+    // En papel la tarjeta se aprieta: el ancho util de una carta es la mitad
+    // que el de la pantalla y el relleno de 20px se come una columna entera.
     <Card className={cn('report-block', className)}>
-      <CardHeader className={cn(actions && 'flex-row items-start justify-between gap-4 space-y-0')}>
+      <CardHeader
+        className={cn(
+          'print:px-3 print:pb-1.5 print:pt-2.5',
+          actions && 'flex-row items-start justify-between gap-4 space-y-0',
+        )}
+      >
         <div className="flex flex-col gap-1">
-          <CardTitle>{title}</CardTitle>
-          {description && <CardDescription>{description}</CardDescription>}
+          <CardTitle className="print:text-[11pt]">{title}</CardTitle>
+          {description && (
+            <CardDescription className="print:text-[8pt]">{description}</CardDescription>
+          )}
         </div>
-        {actions}
+        {actions && <div className="print:hidden">{actions}</div>}
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="print:px-3 print:pb-2.5 print:text-[8.5pt]">
         {isLoading ? (
           <Skeleton className="w-full" style={{ height }} />
         ) : isError ? (
@@ -120,10 +150,10 @@ export function ReportTotals({
   items: { label: string; value: string; tone?: 'neutral' | 'positive' | 'warning' | 'danger' }[];
 }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 print:grid-cols-4 print:gap-2">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 print:grid-cols-4 print:gap-1.5">
       {items.map((item) => (
         <Card key={item.label} className="report-block">
-          <CardContent className="px-5 pb-5 pt-5">
+          <CardContent className="px-5 pb-5 pt-5 print:px-2.5 print:pb-2 print:pt-2">
             <DetailAmount label={item.label} value={item.value} tone={item.tone} />
           </CardContent>
         </Card>

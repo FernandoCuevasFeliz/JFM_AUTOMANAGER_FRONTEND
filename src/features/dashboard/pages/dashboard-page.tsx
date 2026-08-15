@@ -23,12 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/features/auth/use-auth';
 import { useSalesSummary } from '@/features/sales/hooks';
 import { useVehiclesSummary } from '@/features/vehicles/hooks';
-import {
-  CHART_AXIS_TICK,
-  CHART_LEGEND_STYLE,
-  CHART_TOOLTIP_STYLE,
-  seriesColor,
-} from '@/lib/chart-theme';
+import { CHART_TOOLTIP_STYLE, seriesColor, useChartStyles } from '@/lib/chart-theme';
 import { formatCivilMonth } from '@/lib/dates';
 import { formatMoney, formatMoneyCompact, formatNumber } from '@/lib/money';
 import { VEHICLE_STATUS_META, type VehicleStatus } from '@/lib/status';
@@ -53,6 +48,10 @@ const STATUS_COLORS: Record<VehicleStatus, string> = {
 };
 
 export function DashboardPage() {
+  // Ejes y leyenda encogen al imprimir, y por props: recharts coloca cada
+  // etiqueta a partir del tamaño que recibe aqui.
+  const { axisTick, legendStyle, isAnimationActive } = useChartStyles();
+
   const { user } = useAuth();
   const accent = userAccent(user?.id);
 
@@ -161,30 +160,36 @@ export function DashboardPage() {
               <PrintChart height={288}>
                 <BarChart data={monthlyChartData} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                  <XAxis
-                    dataKey="label"
-                    tick={CHART_AXIS_TICK}
-                    tickLine={false}
-                    axisLine={false}
-                  />
+                  <XAxis dataKey="label" tick={axisTick} tickLine={false} axisLine={false} />
                   <YAxis
-                    tick={CHART_AXIS_TICK}
+                    tick={axisTick}
                     tickLine={false}
                     axisLine={false}
                     tickFormatter={(value: number) => formatMoneyCompact(value)}
                     width={70}
                   />
                   <Tooltip
-                    formatter={(value: number, name: string) => [formatMoney(value, reporting), name]}
+                    formatter={(value: number, name: string) => [
+                      formatMoney(value, reporting),
+                      name,
+                    ]}
                     contentStyle={CHART_TOOLTIP_STYLE}
                   />
-                  <Legend
-                    iconType="circle"
-                    iconSize={8}
-                    wrapperStyle={CHART_LEGEND_STYLE}
+                  <Legend iconType="circle" iconSize={8} wrapperStyle={legendStyle} />
+                  <Bar
+                    dataKey="totalAmount"
+                    name="Facturado"
+                    fill="var(--chart-1)"
+                    radius={[3, 3, 0, 0]}
+                    isAnimationActive={isAnimationActive}
                   />
-                  <Bar dataKey="totalAmount" name="Facturado" fill="var(--chart-1)" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="totalCollected" name="Cobrado" fill="var(--chart-2)" radius={[3, 3, 0, 0]} />
+                  <Bar
+                    dataKey="totalCollected"
+                    name="Cobrado"
+                    fill="var(--chart-2)"
+                    radius={[3, 3, 0, 0]}
+                    isAnimationActive={isAnimationActive}
+                  />
                 </BarChart>
               </PrintChart>
             )}
@@ -212,12 +217,15 @@ export function DashboardPage() {
             ) : (
               <PrintChart height={288}>
                 <PieChart>
+                  {/* En porcentaje encoge con la caja; en pixeles se recortaba
+                      al imprimir. Ver la nota del donut de `overview-panel`. */}
                   <Pie
+                    isAnimationActive={isAnimationActive}
                     data={statusData}
                     dataKey="value"
                     nameKey="name"
-                    innerRadius={55}
-                    outerRadius={90}
+                    innerRadius="50%"
+                    outerRadius="82%"
                     paddingAngle={2}
                   >
                     {statusData.map((entry) => (
@@ -228,11 +236,7 @@ export function DashboardPage() {
                     formatter={(value: number, name: string) => [`${value} unidades`, name]}
                     contentStyle={CHART_TOOLTIP_STYLE}
                   />
-                  <Legend
-                    iconType="circle"
-                    iconSize={8}
-                    wrapperStyle={CHART_LEGEND_STYLE}
-                  />
+                  <Legend iconType="circle" iconSize={8} wrapperStyle={legendStyle} />
                 </PieChart>
               </PrintChart>
             )}
@@ -253,14 +257,9 @@ export function DashboardPage() {
             <PrintChart height={224}>
               <LineChart data={monthlyChartData} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis
-                  dataKey="label"
-                  tick={CHART_AXIS_TICK}
-                  tickLine={false}
-                  axisLine={false}
-                />
+                <XAxis dataKey="label" tick={axisTick} tickLine={false} axisLine={false} />
                 <YAxis
-                  tick={CHART_AXIS_TICK}
+                  tick={axisTick}
                   tickLine={false}
                   axisLine={false}
                   allowDecimals={false}
@@ -271,6 +270,7 @@ export function DashboardPage() {
                   contentStyle={CHART_TOOLTIP_STYLE}
                 />
                 <Line
+                  isAnimationActive={isAnimationActive}
                   type="monotone"
                   dataKey="totalSales"
                   stroke={seriesColor(0)}

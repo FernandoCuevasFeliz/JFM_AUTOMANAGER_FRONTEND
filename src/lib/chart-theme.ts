@@ -1,3 +1,5 @@
+import { usePrintMode } from '@/lib/use-print-mode';
+
 /**
  * Estilo compartido de las graficas (recharts).
  *
@@ -24,6 +26,44 @@ export const CHART_TOOLTIP_STYLE = {
 export const CHART_AXIS_TICK = { fontSize: 11, fill: 'var(--muted-foreground)' } as const;
 
 export const CHART_LEGEND_STYLE = { fontSize: 12, paddingTop: 8 } as const;
+
+/** Los mismos estilos, encogidos para la hoja. */
+const PRINT_AXIS_TICK = { fontSize: 8, fill: 'var(--muted-foreground)' } as const;
+
+const PRINT_LEGEND_STYLE = { fontSize: 8, paddingTop: 4 } as const;
+
+/**
+ * Estilos de grafica que saben si se esta imprimiendo.
+ *
+ * En papel la grafica pasa de ~1400px a 672px de ancho, asi que doce meses de
+ * eje X tienen la mitad de sitio y las etiquetas de 11px se pisan unas a otras.
+ *
+ * Tiene que ir por **props**, no por CSS: recharts decide donde colocar cada
+ * marca y cuales dibujar midiendo el texto con el tamaño que recibe aqui. Si se
+ * encoge solo en el pintado —con un `font-size` en `@media print`—, el dibujo
+ * sale pequeño pero colocado segun las medidas de 11px, que es exactamente como
+ * las etiquetas acababan fuera de su sitio bajo las barras.
+ */
+export function useChartStyles(): {
+  axisTick: typeof CHART_AXIS_TICK | typeof PRINT_AXIS_TICK;
+  legendStyle: typeof CHART_LEGEND_STYLE | typeof PRINT_LEGEND_STYLE;
+  /**
+   * En papel, **nunca**.
+   *
+   * Recharts dibuja las barras y las lineas fotograma a fotograma: al empezar,
+   * los `<g>` de cada barra estan vacios, sin un solo `<path>` dentro. Al
+   * imprimir, el cambio de tamaño relanza esa animacion y el navegador captura
+   * la pagina de inmediato, asi que se lleva el fotograma cero y la grafica sale
+   * en blanco. Una hoja de papel no se anima: se dibuja entera de una vez.
+   */
+  isAnimationActive: boolean;
+} {
+  const printing = usePrintMode();
+
+  return printing
+    ? { axisTick: PRINT_AXIS_TICK, legendStyle: PRINT_LEGEND_STYLE, isAnimationActive: false }
+    : { axisTick: CHART_AXIS_TICK, legendStyle: CHART_LEGEND_STYLE, isAnimationActive: true };
+}
 
 export const CHART_GRID = {
   strokeDasharray: '3 3',

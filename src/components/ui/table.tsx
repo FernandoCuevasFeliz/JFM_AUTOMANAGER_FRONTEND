@@ -11,9 +11,19 @@ import { cn } from '@/lib/utils';
  */
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
-    // El contenedor scrollea en horizontal: en tablet una tabla de ERP no cabe.
-    <div className="relative max-h-[70dvh] w-full overflow-auto">
-      <table ref={ref} className={cn('w-full caption-bottom text-sm', className)} {...props} />
+    /*
+     * El contenedor scrollea en horizontal: en tablet una tabla de ERP no cabe.
+     *
+     * Al imprimir hay que soltarlo: una caja con scroll manda al papel solo lo
+     * que se ve, asi que de cien filas salian las siete visibles y el reporte
+     * parecia truncado. En papel la tabla fluye y se parte entre hojas.
+     */
+    <div className="relative max-h-[70dvh] w-full overflow-auto print:max-h-none print:overflow-visible">
+      <table
+        ref={ref}
+        className={cn('w-full caption-bottom text-sm print:text-[8.5pt]', className)}
+        {...props}
+      />
     </div>
   ),
 );
@@ -25,6 +35,9 @@ const TableHeader = React.forwardRef<HTMLTableSectionElement, React.HTMLAttribut
       ref={ref}
       className={cn(
         'sticky top-0 z-10 bg-muted/70 backdrop-blur supports-[backdrop-filter]:bg-muted/60',
+        // En papel no hay scroll que seguir: pegajosa solo estorbaria, y el
+        // gris translucido sobre blanco sale como una banda sucia.
+        'print:static print:bg-transparent print:supports-[backdrop-filter]:bg-transparent',
         '[&_tr]:border-b [&_tr]:border-border',
         className,
       )}
@@ -73,6 +86,7 @@ const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<
       ref={ref}
       className={cn(
         'label-micro h-9 whitespace-nowrap px-4 text-left align-middle text-muted-foreground',
+        'print:h-auto print:px-2 print:py-1 print:text-[7pt]',
         className,
       )}
       {...props}
@@ -83,7 +97,11 @@ TableHead.displayName = 'TableHead';
 
 const TableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttributes<HTMLTableCellElement>>(
   ({ className, ...props }, ref) => (
-    <td ref={ref} className={cn('h-11 px-4 py-2 align-middle', className)} {...props} />
+    <td
+      ref={ref}
+      className={cn('h-11 px-4 py-2 align-middle print:h-auto print:px-2 print:py-1', className)}
+      {...props}
+    />
   ),
 );
 TableCell.displayName = 'TableCell';

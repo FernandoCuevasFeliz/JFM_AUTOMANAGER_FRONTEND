@@ -13,29 +13,29 @@ import {
 } from 'recharts';
 import { PrintChart } from '@/components/print-chart';
 import { FilterSelect } from '@/components/filter-bar';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useExpenseCategories } from '@/features/catalogs/hooks';
 import {
-  CHART_AXIS_TICK,
-  CHART_GRID,
-  CHART_LEGEND_STYLE,
-  CHART_TOOLTIP_STYLE,
-  seriesColor,
-} from '@/lib/chart-theme';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { useExpenseCategories } from '@/features/catalogs/hooks';
+import { CHART_GRID, CHART_TOOLTIP_STYLE, seriesColor, useChartStyles } from '@/lib/chart-theme';
 import { formatCivilMonth } from '@/lib/dates';
 import { formatMoney, formatMoneyCompact, formatNumber } from '@/lib/money';
 import type { ExpenseScope } from '@/lib/status';
 import { EXPENSE_SCOPE_META } from '@/lib/status';
 import { MonthRangeFilter, ReportCard, ReportTotals } from './report-shell';
 import { useMonthlyExpensesReport } from '../hooks';
-import {
-  REPORT_CURRENCY,
-  type MonthlyExpensesParams,
-  monthKey,
-  sumConverted,
-} from '../types';
+import { REPORT_CURRENCY, type MonthlyExpensesParams, monthKey, sumConverted } from '../types';
 
 export function ExpensesPanel() {
+  // Ejes y leyenda encogen al imprimir, y por props: recharts coloca cada
+  // etiqueta a partir del tamaño que recibe aqui.
+  const { axisTick, legendStyle, isAnimationActive } = useChartStyles();
+
   const [filters, setFilters] = React.useState<MonthlyExpensesParams>({});
   const categories = useExpenseCategories();
 
@@ -48,18 +48,27 @@ export function ExpensesPanel() {
 
     for (const row of rows) {
       const clave = monthKey(row.month);
-      const actual = mapa.get(clave) ?? { label: formatCivilMonth(clave), total: 0 };
+      const actual = mapa.get(clave) ?? {
+        label: formatCivilMonth(clave),
+        total: 0,
+      };
       actual.total += row.totalAmountConverted;
       mapa.set(clave, actual);
     }
 
     return [...mapa.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([, value]) => ({ ...value, total: Math.round(value.total * 100) / 100 }));
+      .map(([, value]) => ({
+        ...value,
+        total: Math.round(value.total * 100) / 100,
+      }));
   }, [rows]);
 
   const porCategoria = React.useMemo(() => {
-    const mapa = new Map<string, { nombre: string; scope: ExpenseScope; total: number; conteo: number }>();
+    const mapa = new Map<
+      string,
+      { nombre: string; scope: ExpenseScope; total: number; conteo: number }
+    >();
 
     for (const row of rows) {
       const actual = mapa.get(row.categoryId) ?? {
@@ -85,16 +94,16 @@ export function ExpensesPanel() {
 
   return (
     <div className="flex flex-col gap-4">
-      <MonthRangeFilter
-        value={filters}
-        onChange={(next) => setFilters({ ...filters, ...next })}
-      >
+      <MonthRangeFilter value={filters} onChange={(next) => setFilters({ ...filters, ...next })}>
         <FilterSelect
           value={filters.categoryId}
           onChange={(value) => setFilters({ ...filters, categoryId: value })}
           placeholder="Categoria"
           allLabel="Todas las categorias"
-          options={categories.map((category) => ({ value: category.id, label: category.name }))}
+          options={categories.map((category) => ({
+            value: category.id,
+            label: category.name,
+          }))}
         />
         <FilterSelect
           value={filters.scope}
@@ -110,7 +119,10 @@ export function ExpensesPanel() {
 
       <ReportTotals
         items={[
-          { label: `Gasto total (${REPORT_CURRENCY})`, value: formatMoney(total, REPORT_CURRENCY) },
+          {
+            label: `Gasto total (${REPORT_CURRENCY})`,
+            value: formatMoney(total, REPORT_CURRENCY),
+          },
           { label: 'Registros', value: formatNumber(conteo) },
           {
             label: 'Imputado a unidades',
@@ -135,9 +147,9 @@ export function ExpensesPanel() {
         <PrintChart height={300}>
           <BarChart data={porMes} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
             <CartesianGrid {...CHART_GRID} />
-            <XAxis dataKey="label" tick={CHART_AXIS_TICK} tickLine={false} axisLine={false} />
+            <XAxis dataKey="label" tick={axisTick} tickLine={false} axisLine={false} />
             <YAxis
-              tick={CHART_AXIS_TICK}
+              tick={axisTick}
               tickLine={false}
               axisLine={false}
               tickFormatter={(value: number) => formatMoneyCompact(value)}
@@ -147,7 +159,13 @@ export function ExpensesPanel() {
               contentStyle={CHART_TOOLTIP_STYLE}
               formatter={(value: number) => [formatMoney(value, REPORT_CURRENCY), 'Gasto']}
             />
-            <Bar dataKey="total" name="Gasto" fill={seriesColor(2)} radius={[3, 3, 0, 0]} />
+            <Bar
+              dataKey="total"
+              name="Gasto"
+              fill={seriesColor(2)}
+              radius={[3, 3, 0, 0]}
+              isAnimationActive={isAnimationActive}
+            />
           </BarChart>
         </PrintChart>
       </ReportCard>
@@ -165,12 +183,15 @@ export function ExpensesPanel() {
         <div className="print-stack grid gap-6 lg:grid-cols-2">
           <PrintChart height={280}>
             <PieChart>
+              {/* En porcentaje encoge con la caja; en pixeles se recortaba al
+                  imprimir. Ver la nota del donut de `overview-panel`. */}
               <Pie
+                isAnimationActive={isAnimationActive}
                 data={porCategoria}
                 dataKey="total"
                 nameKey="nombre"
-                innerRadius={60}
-                outerRadius={100}
+                innerRadius="52%"
+                outerRadius="82%"
                 paddingAngle={2}
               >
                 {porCategoria.map((entry, index) => (
@@ -184,7 +205,7 @@ export function ExpensesPanel() {
                   name,
                 ]}
               />
-              <Legend wrapperStyle={CHART_LEGEND_STYLE} iconType="circle" iconSize={8} />
+              <Legend wrapperStyle={legendStyle} iconType="circle" iconSize={8} />
             </PieChart>
           </PrintChart>
 

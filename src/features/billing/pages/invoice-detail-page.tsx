@@ -25,6 +25,7 @@ import { formatCivilDate, formatDate } from '@/lib/dates';
 import { formatMoney } from '@/lib/money';
 import { FISCAL_DOC_STATUS_META } from '@/lib/status';
 import { cn } from '@/lib/utils';
+import { imprimirPagina } from '@/lib/use-print-mode';
 import { CreditNoteDialog, IssueDialog, RejectDialog } from '../components/fiscal-dialogs';
 import { InvoiceDocument } from '../components/invoice-document';
 import {
@@ -121,7 +122,7 @@ export function InvoiceDetailPage() {
           backLabel="Comprobantes"
           actions={
             <>
-              <Button variant="outline" onClick={() => window.print()} loading={cargando}>
+              <Button variant="outline" onClick={imprimirPagina} loading={cargando}>
                 <Printer />
                 Imprimir
               </Button>

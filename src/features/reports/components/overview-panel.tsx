@@ -14,15 +14,16 @@ import {
 import { PrintChart } from '@/components/print-chart';
 import { FilterSelect } from '@/components/filter-bar';
 import { StatusBadge } from '@/components/status-badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { NCF_TYPE_LABELS, INVOICE_NCF_TYPES, type NcfType } from '@/features/billing/types';
 import {
-  CHART_AXIS_TICK,
-  CHART_GRID,
-  CHART_LEGEND_STYLE,
-  CHART_TOOLTIP_STYLE,
-  seriesColor,
-} from '@/lib/chart-theme';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { NCF_TYPE_LABELS, INVOICE_NCF_TYPES, type NcfType } from '@/features/billing/types';
+import { CHART_GRID, CHART_TOOLTIP_STYLE, seriesColor, useChartStyles } from '@/lib/chart-theme';
 import { formatCivilMonth } from '@/lib/dates';
 import { formatMoney, formatMoneyCompact, formatNumber } from '@/lib/money';
 import {
@@ -55,6 +56,10 @@ const STATUS_COLORS: Record<VehicleStatus, string> = {
 };
 
 export function OverviewPanel() {
+  // Ejes y leyenda encogen al imprimir, y por props: recharts coloca cada
+  // etiqueta a partir del tamaño que recibe aqui.
+  const { axisTick, legendStyle, isAnimationActive } = useChartStyles();
+
   const [fiscalFilters, setFiscalFilters] = React.useState<FiscalDocumentsParams>({});
 
   const inventory = useInventoryStatusReport();
@@ -76,8 +81,7 @@ export function OverviewPanel() {
   );
 
   const totalUnidades = inventoryRows.reduce((total, row) => total + row.vehicleCount, 0);
-  const disponibles =
-    inventoryRows.find((row) => row.status === 'in_inventory')?.vehicleCount ?? 0;
+  const disponibles = inventoryRows.find((row) => row.status === 'in_inventory')?.vehicleCount ?? 0;
 
   /** Una fila por mes, tipo de documento, estado y moneda: se pliega por mes. */
   const fiscalPorMes = React.useMemo(() => {
@@ -85,15 +89,17 @@ export function OverviewPanel() {
 
     for (const row of fiscalRows) {
       const clave = monthKey(row.month);
-      const actual = mapa.get(clave) ?? { label: formatCivilMonth(clave), facturas: 0, notas: 0 };
+      const actual = mapa.get(clave) ?? {
+        label: formatCivilMonth(clave),
+        facturas: 0,
+        notas: 0,
+      };
       if (row.documentKind === 'credit_note') actual.notas += row.totalAmountConverted;
       else actual.facturas += row.totalAmountConverted;
       mapa.set(clave, actual);
     }
 
-    return [...mapa.entries()]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([, value]) => value);
+    return [...mapa.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, value]) => value);
   }, [fiscalRows]);
 
   const facturado = sumConverted(
@@ -116,7 +122,11 @@ export function OverviewPanel() {
       <ReportTotals
         items={[
           { label: 'Unidades registradas', value: formatNumber(totalUnidades) },
-          { label: 'Disponibles', value: formatNumber(disponibles), tone: 'positive' },
+          {
+            label: 'Disponibles',
+            value: formatNumber(disponibles),
+            tone: 'positive',
+          },
           {
             label: `Facturado emitido (${REPORT_CURRENCY})`,
             value: formatMoney(facturado, REPORT_CURRENCY),
@@ -143,12 +153,23 @@ export function OverviewPanel() {
         >
           <PrintChart height={280}>
             <PieChart>
+              {/*
+                Radios en porcentaje, no en pixeles.
+
+                Con `outerRadius={100}` el donut media 200px fijos: en pantalla
+                sobraba sitio, pero en la hoja la caja se queda en ~215px de
+                alto y, restando la leyenda, el circulo salia recortado por
+                arriba y por abajo. En porcentaje se mide contra la dimension
+                menor del contenedor, asi que encoge con la caja en vez de
+                desbordarla.
+              */}
               <Pie
+                isAnimationActive={isAnimationActive}
                 data={inventoryData}
                 dataKey="value"
                 nameKey="name"
-                innerRadius={60}
-                outerRadius={100}
+                innerRadius="52%"
+                outerRadius="82%"
                 paddingAngle={2}
               >
                 {inventoryData.map((entry) => (
@@ -159,7 +180,7 @@ export function OverviewPanel() {
                 contentStyle={CHART_TOOLTIP_STYLE}
                 formatter={(value: number, name: string) => [`${value} unidades`, name]}
               />
-              <Legend wrapperStyle={CHART_LEGEND_STYLE} iconType="circle" iconSize={8} />
+              <Legend wrapperStyle={legendStyle} iconType="circle" iconSize={8} />
             </PieChart>
           </PrintChart>
         </ReportCard>
@@ -236,7 +257,10 @@ export function OverviewPanel() {
         <FilterSelect
           value={fiscalFilters.documentKind}
           onChange={(value) =>
-            setFiscalFilters({ ...fiscalFilters, documentKind: value as FiscalDocumentKind })
+            setFiscalFilters({
+              ...fiscalFilters,
+              documentKind: value as FiscalDocumentKind,
+            })
           }
           placeholder="Documento"
           allLabel="Facturas y notas"
@@ -248,7 +272,10 @@ export function OverviewPanel() {
         <FilterSelect
           value={fiscalFilters.status}
           onChange={(value) =>
-            setFiscalFilters({ ...fiscalFilters, status: value as FiscalDocStatus })
+            setFiscalFilters({
+              ...fiscalFilters,
+              status: value as FiscalDocStatus,
+            })
           }
           placeholder="Estado"
           allLabel="Todos los estados"
@@ -281,9 +308,9 @@ export function OverviewPanel() {
         <PrintChart height={300}>
           <BarChart data={fiscalPorMes} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
             <CartesianGrid {...CHART_GRID} />
-            <XAxis dataKey="label" tick={CHART_AXIS_TICK} tickLine={false} axisLine={false} />
+            <XAxis dataKey="label" tick={axisTick} tickLine={false} axisLine={false} />
             <YAxis
-              tick={CHART_AXIS_TICK}
+              tick={axisTick}
               tickLine={false}
               axisLine={false}
               tickFormatter={(value: number) => formatMoneyCompact(value)}
@@ -296,9 +323,16 @@ export function OverviewPanel() {
                 name,
               ]}
             />
-            <Legend wrapperStyle={CHART_LEGEND_STYLE} iconType="circle" iconSize={8} />
-            <Bar dataKey="facturas" name="Facturas" fill={seriesColor(0)} radius={[3, 3, 0, 0]} />
+            <Legend wrapperStyle={legendStyle} iconType="circle" iconSize={8} />
             <Bar
+              dataKey="facturas"
+              name="Facturas"
+              fill={seriesColor(0)}
+              radius={[3, 3, 0, 0]}
+              isAnimationActive={isAnimationActive}
+            />
+            <Bar
+              isAnimationActive={isAnimationActive}
               dataKey="notas"
               name="Notas de credito"
               fill={seriesColor(3)}
