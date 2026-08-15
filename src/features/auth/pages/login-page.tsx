@@ -3,6 +3,7 @@ import { AlertCircle, Car, Eye, EyeOff } from 'lucide-react';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { Navigate, useNavigate } from 'react-router-dom';
+import { BrandLogo } from '@/components/brand-logo';
 import { FormField, fieldAria } from '@/components/form-field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,15 +71,21 @@ export function LoginPage() {
           aria-hidden
         />
 
-        <div className="relative flex items-center gap-3">
-          <span className="flex size-10 items-center justify-center rounded-lg bg-signal text-signal-foreground">
-            <Car className="size-5" aria-hidden />
-          </span>
-          <span className="flex flex-col leading-none">
-            <span className="text-lg font-bold tracking-tight">
-              JFM<span className="font-normal text-sidebar-foreground"> AutoManager</span>
+        {/* Aqui el panel es ancho, asi que el logo va mas grande. Centrado en
+            el contenedor, con el identificador del sistema debajo. */}
+        <div className="relative flex flex-col items-center gap-5">
+          <BrandLogo variant="light" height={92} priority />
+
+          <span className="flex items-center gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-signal text-signal-foreground">
+              <Car className="size-5" aria-hidden />
             </span>
-            <span className="label-micro mt-1 text-sidebar-muted">EJGH Auto Import</span>
+            <span className="flex flex-col leading-none">
+              <span className="text-lg font-bold tracking-tight">
+                JFM<span className="font-normal text-sidebar-foreground"> AutoManager</span>
+              </span>
+              <span className="label-micro mt-1 text-sidebar-muted">EJGH Auto Import</span>
+            </span>
           </span>
         </div>
 
@@ -100,12 +107,19 @@ export function LoginPage() {
 
       <main className="flex flex-1 items-center justify-center px-6 py-12">
         <div className="w-full max-w-[23rem]">
-          <div className="mb-8 flex flex-col items-center gap-3 lg:hidden">
-            <span className="flex size-12 items-center justify-center rounded-xl bg-signal text-signal-foreground">
-              <Car className="size-6" aria-hidden />
-            </span>
-            <span className="text-lg font-bold tracking-tight">
-              JFM<span className="font-normal text-muted-foreground"> AutoManager</span>
+          {/* En movil el panel de marca no existe, asi que el logo va aqui,
+              en su version oscura porque el fondo es claro. */}
+          <div className="mb-8 flex flex-col items-center gap-4 lg:hidden">
+            <BrandLogo height={64} priority className="dark:hidden" />
+            <BrandLogo variant="light" height={64} priority className="hidden dark:block" />
+
+            <span className="flex items-center gap-2.5">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-signal text-signal-foreground">
+                <Car className="size-5" aria-hidden />
+              </span>
+              <span className="text-lg font-bold leading-none tracking-tight">
+                JFM<span className="font-normal text-muted-foreground"> AutoManager</span>
+              </span>
             </span>
           </div>
 

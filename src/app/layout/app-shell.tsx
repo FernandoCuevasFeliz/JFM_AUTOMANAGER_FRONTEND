@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { BrandLogo } from '@/components/brand-logo';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -114,25 +115,39 @@ export function AppShell() {
         aria-label="Navegacion principal"
         style={roleAccentStyle(user?.roleName)}
       >
-        <div className="flex h-14 items-center justify-between gap-2 border-b border-sidebar-border px-4">
-          <Link to="/" className="group flex items-center gap-2.5 rounded-md">
-            <span
-              className="flex size-8 items-center justify-center rounded-md text-white shadow-xs"
-              style={{ backgroundColor: role.rail }}
-            >
-              <BRAND_ICON className="size-4.5" aria-hidden />
-            </span>
-            <span className="flex flex-col leading-none">
-              <span className="text-[15px] font-bold tracking-tight text-sidebar-accent-foreground">
-                JFM<span className="font-normal text-sidebar-foreground"> AutoManager</span>
+        {/*
+          Marca en dos pisos: arriba el logo de la empresa, centrado en el ancho
+          del sidebar; debajo, el identificador del sistema. Responden a
+          preguntas distintas —de quien es el negocio y que herramienta usas— y
+          por eso conviven en vez de sustituirse.
+        */}
+        <div className="relative flex flex-col items-center gap-3.5 border-b border-sidebar-border px-4 py-5">
+          <Link
+            to="/"
+            className="flex flex-col items-center gap-3.5 rounded-md"
+            aria-label="JFM AutoManager · ir al tablero"
+          >
+            <BrandLogo variant="light" height={46} priority />
+
+            <span className="flex items-center gap-2.5">
+              <span
+                className="flex size-8 shrink-0 items-center justify-center rounded-md text-white shadow-xs"
+                style={{ backgroundColor: role.rail }}
+              >
+                <BRAND_ICON className="size-4.5" aria-hidden />
               </span>
-              <span className="label-micro mt-1 text-sidebar-muted">EJGH Auto Import</span>
+              <span className="flex flex-col leading-none">
+                <span className="text-[15px] font-bold tracking-tight text-sidebar-accent-foreground">
+                  JFM<span className="font-normal text-sidebar-foreground"> AutoManager</span>
+                </span>
+                <span className="label-micro mt-1 text-sidebar-muted">EJGH Auto Import</span>
+              </span>
             </span>
           </Link>
 
           <button
             type="button"
-            className="hit-target flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground lg:hidden"
+            className="hit-target absolute right-3 top-3 flex size-8 cursor-pointer items-center justify-center rounded-md text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground lg:hidden"
             onClick={() => setMobileOpen(false)}
             aria-label="Cerrar menu"
           >

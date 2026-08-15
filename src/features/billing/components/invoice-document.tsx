@@ -1,5 +1,5 @@
-import { Car } from 'lucide-react';
 import type * as React from 'react';
+import { BrandLogo } from '@/components/brand-logo';
 import { formatCivilDate, formatCivilDateLong, formatDate } from '@/lib/dates';
 import { formatExchangeRate, formatMoney, formatPercentage } from '@/lib/money';
 import { cn } from '@/lib/utils';
@@ -31,12 +31,10 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceView }) {
     >
       {/* --- Encabezado ---------------------------------------------------- */}
       <header className="flex items-start justify-between gap-8 border-b-2 border-slate-900 pb-5">
-        <div className="flex min-w-0 gap-3">
-          <span className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded bg-[#DC2626] text-white">
-            <Car className="size-5" aria-hidden />
-          </span>
+        <div className="flex min-w-0 flex-col gap-2.5">
+          <BrandLogo height={46} priority />
           <div className="min-w-0">
-            <p className="text-[13pt] font-bold leading-tight tracking-tight">{COMPANY.name}</p>
+            <p className="text-[11pt] font-bold leading-tight tracking-tight">{COMPANY.name}</p>
             <div className="mt-1 space-y-0.5 text-[8.5pt] leading-snug text-slate-600">
               {COMPANY.rnc && (
                 <p>

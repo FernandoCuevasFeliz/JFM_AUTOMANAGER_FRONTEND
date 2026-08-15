@@ -20,10 +20,12 @@ import { useCurrencies, usePaymentMethods } from '@/features/catalogs/hooks';
 import { ClientPicker } from '@/features/clients/components/client-picker';
 import { useUsers } from '@/features/users/hooks';
 import { userFullName } from '@/features/users/types';
+import { useVehicle } from '@/features/vehicles/hooks';
 import { VehiclePicker } from '@/features/vehicles/components/vehicle-picker';
 import { todayCivil } from '@/lib/dates';
 import { handleFormError } from '@/lib/errors';
-import { REPORTING_CURRENCY, isReportingCurrency } from '@/lib/money';
+import { cn } from '@/lib/utils';
+import { REPORTING_CURRENCY, formatMoney, formatPercentage, isReportingCurrency } from '@/lib/money';
 import { SELLABLE_VEHICLE_STATUSES } from '@/lib/status';
 import { useCreateSale } from '../hooks';
 import { SALE_FORM_FIELDS, type CreateSaleValues, createSaleSchema } from '../schemas';
@@ -83,6 +85,23 @@ export function SaleForm() {
   const currencyId = watch('currencyId');
   const currency = currencies.find((item) => item.id === currencyId);
   const isDop = isReportingCurrency(currency?.code);
+
+  /*
+   * Precio de lista de la unidad elegida.
+   *
+   * Es una REFERENCIA, no un limite: el precio de lista es sugerido y el real
+   * se pacta en la venta (asi lo modela el backend, que no valida uno contra
+   * otro). Rebajar es normal —negociacion, unidad con detalles, stock parado—
+   * pero conviene que se vea, para que sea una decision y no un descuido.
+   */
+  const vehicleId = watch('vehicleId');
+  const selectedVehicle = useVehicle(vehicleId || undefined).data;
+  const listPrice = selectedVehicle?.salePrice ?? null;
+  const salePrice = Number(watch('salePrice'));
+  const priceGap =
+    listPrice !== null && Number.isFinite(salePrice) && salePrice > 0
+      ? Math.round((salePrice - listPrice) * 100) / 100
+      : null;
 
   // Una venta en pesos lleva tasa 1 (§7 de API.md).
   React.useEffect(() => {
@@ -222,15 +241,59 @@ export function SaleForm() {
                 />
               </FormField>
 
-              <FormField label="Precio de venta" htmlFor="salePrice" error={errors.salePrice} required>
-                <Input
-                  {...fieldAria('salePrice', errors.salePrice)}
-                  type="number"
-                  step="0.01"
-                  min={0}
-                  placeholder="0.00"
-                  {...register('salePrice')}
-                />
+              <FormField
+                label="Precio de venta"
+                htmlFor="salePrice"
+                error={errors.salePrice}
+                required
+                hint={
+                  listPrice !== null
+                    ? `Precio de lista: ${formatMoney(listPrice, currency?.code)}`
+                    : undefined
+                }
+              >
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex gap-2">
+                    <Input
+                      {...fieldAria('salePrice', errors.salePrice)}
+                      type="number"
+                      step="0.01"
+                      min={0}
+                      placeholder="0.00"
+                      className="num"
+                      {...register('salePrice')}
+                    />
+                    {listPrice !== null && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setValue('salePrice', listPrice, { shouldValidate: true })}
+                      >
+                        Usar lista
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* La desviacion se muestra, no se bloquea. */}
+                  {priceGap !== null && Math.abs(priceGap) >= 0.01 && (
+                    <p
+                      className={cn(
+                        'text-xs leading-relaxed',
+                        priceGap < 0 ? 'text-warning' : 'text-success',
+                      )}
+                    >
+                      {priceGap < 0 ? 'Por debajo del precio de lista: ' : 'Por encima del precio de lista: '}
+                      <span className="num font-medium">
+                        {formatMoney(Math.abs(priceGap), currency?.code)}
+                      </span>
+                      {listPrice !== null && listPrice > 0 && (
+                        <>
+                          {' '}({formatPercentage(Math.abs((priceGap / listPrice) * 100))})
+                        </>
+                      )}
+                    </p>
+                  )}
+                </div>
               </FormField>
 
               <FormField

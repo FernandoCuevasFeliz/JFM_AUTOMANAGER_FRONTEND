@@ -10,6 +10,7 @@ dist-ssr
 .vite
 .claude/
 .agents/
+.agents/skills/ui-ux-pro-max/
 
 # Credenciales de la demo: el repositorio es publico y el despliegue esta en
 # linea, asi que subirlas daria acceso al panel a cualquiera. Si prefieres

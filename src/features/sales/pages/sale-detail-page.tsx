@@ -1,4 +1,4 @@
-import { CheckCircle2, Plus, Trash2, XCircle } from 'lucide-react';
+import { CheckCircle2, Pencil, Plus, Trash2, XCircle } from 'lucide-react';
 import * as React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/confirm-dialog';
@@ -18,9 +18,11 @@ import {
   canCancelSale,
   canCompleteSale,
   isSaleDeletable,
+  isSaleEditable,
 } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import { PaymentDialog } from '../components/payment-dialog';
+import { SaleEditDialog } from '../components/sale-edit-dialog';
 import { useCancelSale, useCompleteSale, useDeleteSale, useSale } from '../hooks';
 
 export function SaleDetailPage() {
@@ -34,6 +36,7 @@ export function SaleDetailPage() {
   const deleteSale = useDeleteSale();
 
   const [paymentOpen, setPaymentOpen] = React.useState(false);
+  const [editOpen, setEditOpen] = React.useState(false);
   const [completeOpen, setCompleteOpen] = React.useState(false);
   const [cancelOpen, setCancelOpen] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
@@ -64,6 +67,14 @@ export function SaleDetailPage() {
               <Button onClick={() => setPaymentOpen(true)}>
                 <Plus />
                 Registrar cobro
+              </Button>
+            )}
+
+            {/* Solo se edita mientras la venta sigue en proceso (§7 de API.md). */}
+            {canWrite && isSaleEditable(sale.status) && (
+              <Button variant="outline" onClick={() => setEditOpen(true)}>
+                <Pencil />
+                Editar
               </Button>
             )}
 
@@ -231,6 +242,7 @@ export function SaleDetailPage() {
       </div>
 
       <PaymentDialog sale={sale} open={paymentOpen} onOpenChange={setPaymentOpen} />
+      <SaleEditDialog sale={sale} open={editOpen} onOpenChange={setEditOpen} />
 
       <ConfirmDialog
         open={completeOpen}

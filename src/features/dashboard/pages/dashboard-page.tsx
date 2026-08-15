@@ -11,11 +11,11 @@ import {
   LineChart,
   Pie,
   PieChart,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
+import { PrintChart } from '@/components/print-chart';
 import { PageHeader } from '@/components/page-header';
 import { CardSkeleton, ErrorState } from '@/components/states';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,37 +23,18 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/features/auth/use-auth';
 import { useSalesSummary } from '@/features/sales/hooks';
 import { useVehiclesSummary } from '@/features/vehicles/hooks';
+import {
+  CHART_AXIS_TICK,
+  CHART_LEGEND_STYLE,
+  CHART_TOOLTIP_STYLE,
+  seriesColor,
+} from '@/lib/chart-theme';
 import { formatCivilMonth } from '@/lib/dates';
 import { formatMoney, formatMoneyCompact, formatNumber } from '@/lib/money';
 import { VEHICLE_STATUS_META, type VehicleStatus } from '@/lib/status';
 import { userAccent, userAccentStyle } from '@/lib/user-accent';
 import { cn } from '@/lib/utils';
 import { useMonthlySales } from '../hooks';
-
-/**
- * Estilo unico de los tooltips de recharts, para no repetirlo en cada grafica.
- * La sombra va literal: `@theme inline` incrusta `--shadow-pop` en la utilidad
- * `shadow-pop` y no lo publica como custom property en tiempo de ejecucion.
- */
-const TOOLTIP_STYLE = {
-  backgroundColor: 'var(--popover)',
-  border: '1px solid var(--border)',
-  borderRadius: 10,
-  boxShadow: '0 10px 30px -8px oklch(0.21 0.04 265 / 0.18), 0 2px 8px -2px oklch(0.21 0.04 265 / 0.08)',
-  fontSize: 13,
-  padding: '8px 10px',
-} as const;
-
-const AXIS_TICK = { fontSize: 11, fill: 'var(--muted-foreground)' } as const;
-
-/** Colores del tema, para que las graficas hablen el mismo idioma que la UI. */
-const CHART_COLORS = [
-  'var(--chart-1)',
-  'var(--chart-2)',
-  'var(--chart-3)',
-  'var(--chart-4)',
-  'var(--chart-5)',
-];
 
 /**
  * Color de cada estado en las graficas.
@@ -177,17 +158,17 @@ export function DashboardPage() {
             ) : monthlySales.isError ? (
               <ErrorState error={monthlySales.error} onRetry={monthlySales.refetch} />
             ) : (
-              <ResponsiveContainer width="100%" height={288}>
+              <PrintChart height={288}>
                 <BarChart data={monthlyChartData} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis
                     dataKey="label"
-                    tick={AXIS_TICK}
+                    tick={CHART_AXIS_TICK}
                     tickLine={false}
                     axisLine={false}
                   />
                   <YAxis
-                    tick={AXIS_TICK}
+                    tick={CHART_AXIS_TICK}
                     tickLine={false}
                     axisLine={false}
                     tickFormatter={(value: number) => formatMoneyCompact(value)}
@@ -195,17 +176,17 @@ export function DashboardPage() {
                   />
                   <Tooltip
                     formatter={(value: number, name: string) => [formatMoney(value, reporting), name]}
-                    contentStyle={TOOLTIP_STYLE}
+                    contentStyle={CHART_TOOLTIP_STYLE}
                   />
                   <Legend
                     iconType="circle"
                     iconSize={8}
-                    wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
+                    wrapperStyle={CHART_LEGEND_STYLE}
                   />
                   <Bar dataKey="totalAmount" name="Facturado" fill="var(--chart-1)" radius={[3, 3, 0, 0]} />
                   <Bar dataKey="totalCollected" name="Cobrado" fill="var(--chart-2)" radius={[3, 3, 0, 0]} />
                 </BarChart>
-              </ResponsiveContainer>
+              </PrintChart>
             )}
           </CardContent>
         </Card>
@@ -229,7 +210,7 @@ export function DashboardPage() {
                 Todavia no hay unidades registradas.
               </p>
             ) : (
-              <ResponsiveContainer width="100%" height={288}>
+              <PrintChart height={288}>
                 <PieChart>
                   <Pie
                     data={statusData}
@@ -245,15 +226,15 @@ export function DashboardPage() {
                   </Pie>
                   <Tooltip
                     formatter={(value: number, name: string) => [`${value} unidades`, name]}
-                    contentStyle={TOOLTIP_STYLE}
+                    contentStyle={CHART_TOOLTIP_STYLE}
                   />
                   <Legend
                     iconType="circle"
                     iconSize={8}
-                    wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
+                    wrapperStyle={CHART_LEGEND_STYLE}
                   />
                 </PieChart>
-              </ResponsiveContainer>
+              </PrintChart>
             )}
           </CardContent>
         </Card>
@@ -269,17 +250,17 @@ export function DashboardPage() {
           {monthlySales.isLoading ? (
             <Skeleton className="h-56 w-full" />
           ) : (
-            <ResponsiveContainer width="100%" height={224}>
+            <PrintChart height={224}>
               <LineChart data={monthlyChartData} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis
                   dataKey="label"
-                  tick={AXIS_TICK}
+                  tick={CHART_AXIS_TICK}
                   tickLine={false}
                   axisLine={false}
                 />
                 <YAxis
-                  tick={AXIS_TICK}
+                  tick={CHART_AXIS_TICK}
                   tickLine={false}
                   axisLine={false}
                   allowDecimals={false}
@@ -287,18 +268,18 @@ export function DashboardPage() {
                 />
                 <Tooltip
                   formatter={(value: number) => [`${value} ventas`, 'Ventas']}
-                  contentStyle={TOOLTIP_STYLE}
+                  contentStyle={CHART_TOOLTIP_STYLE}
                 />
                 <Line
                   type="monotone"
                   dataKey="totalSales"
-                  stroke={CHART_COLORS[0]}
+                  stroke={seriesColor(0)}
                   strokeWidth={2}
-                  dot={{ r: 2.5, strokeWidth: 0, fill: CHART_COLORS[0] }}
+                  dot={{ r: 2.5, strokeWidth: 0, fill: seriesColor(0) }}
                   activeDot={{ r: 4.5, strokeWidth: 2, stroke: 'var(--card)' }}
                 />
               </LineChart>
-            </ResponsiveContainer>
+            </PrintChart>
           )}
         </CardContent>
       </Card>

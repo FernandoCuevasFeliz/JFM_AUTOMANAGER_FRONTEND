@@ -294,8 +294,14 @@
 @media print {
   @page {
     size: A4;
-    /* Los margenes los pone el propio documento, en milimetros y a su medida. */
-    margin: 0;
+    /*
+     * Margenes reales. Antes esto era `margin: 0` porque la factura pone sus
+     * propios 14mm, pero eso dejaba SIN MARGEN a todo lo demas que se imprime
+     * —los reportes salian pegados al borde del papel—. Ahora el margen lo pone
+     * la pagina y la hoja del documento anula su relleno, asi que los dos casos
+     * quedan bien.
+     */
+    margin: 12mm;
   }
 
   html,
@@ -305,7 +311,7 @@
     color: #0f172a !important;
   }
 
-  /* Una tabla de pagos partida a la mitad entre dos hojas es ilegible. */
+  /* Una tabla partida a la mitad entre dos hojas es ilegible. */
   tr,
   thead,
   .break-inside-avoid {
@@ -317,10 +323,41 @@
     display: table-header-group;
   }
 
+  /* El margen ya lo pone `@page`: sumar el relleno lo duplicaria. */
   .invoice-sheet {
     width: 100% !important;
     max-width: none !important;
+    padding: 0 !important;
     box-shadow: none !important;
+  }
+
+  /*
+   * Las graficas NO se tocan por CSS.
+   *
+   * Su tamaño lo fija recharts en el DOM a partir de su estado, asi que
+   * forzarlo aqui solo estiraba el `<svg>` y descuadraba el texto de los ejes,
+   * que no escala con el. El ancho de impresion se decide en React, antes de
+   * imprimir: ver `use-print-mode.ts` y `print-chart.tsx`.
+   *
+   * Lo unico que hace falta es que no se parta entre dos hojas.
+   */
+  .recharts-wrapper {
+    break-inside: avoid;
+  }
+
+  /* Cada bloque de reporte entero en una hoja, y sin sombras ni relleno gris. */
+  .report-block {
+    break-inside: avoid;
+    box-shadow: none !important;
+  }
+
+  /* En papel no hay dos columnas: el ancho util es la mitad que en pantalla. */
+  .print-stack {
+    display: block !important;
+  }
+
+  .print-stack > * + * {
+    margin-top: 12px;
   }
 }
 

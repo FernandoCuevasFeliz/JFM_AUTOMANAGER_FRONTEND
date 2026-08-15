@@ -42,6 +42,7 @@ const SaleDetailPage = lazyPage(() => import('@/features/sales/pages/sale-detail
 const SaleNewPage = lazyPage(() => import('@/features/sales/pages/sale-new-page'), 'SaleNewPage');
 const InvoicesListPage = lazyPage(() => import('@/features/billing/pages/invoices-list-page'), 'InvoicesListPage');
 const InvoiceDetailPage = lazyPage(() => import('@/features/billing/pages/invoice-detail-page'), 'InvoiceDetailPage');
+const ReportsPage = lazyPage(() => import('@/features/reports/pages/reports-page'), 'ReportsPage');
 const CatalogsPage = lazyPage(() => import('@/features/catalogs/pages/catalogs-page'), 'CatalogsPage');
 const UsersListPage = lazyPage(() => import('@/features/users/pages/users-list-page'), 'UsersListPage');
 const UserDetailPage = lazyPage(() => import('@/features/users/pages/user-detail-page'), 'UserDetailPage');
@@ -170,6 +171,12 @@ export const router = createBrowserRouter([
               { path: 'invoices', element: <InvoicesListPage /> },
               { path: 'invoices/:id', element: <InvoiceDetailPage /> },
             ],
+          },
+
+          // --- Reportes -----------------------------------------------------
+          {
+            element: <RequirePermission permission="reports:read" />,
+            children: [{ path: 'reports', element: <ReportsPage /> }],
           },
 
           // --- Catalogos ----------------------------------------------------
