@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useAuth } from '@/features/auth/use-auth';
+import { useClient } from '@/features/clients/hooks';
 import type { Sale } from '@/features/sales/types';
 import { formatMoney } from '@/lib/money';
 import { FISCAL_DOC_STATUS_META } from '@/lib/status';
@@ -31,6 +32,16 @@ export function SaleInvoicePanel({ sale }: { sale: Sale }) {
   const createInvoice = useCreateInvoice();
 
   const [ncfType, setNcfType] = React.useState<NcfType>('E32');
+
+  /*
+   * El receptor decide el tipo de comprobante, asi que hace falta su documento.
+   * Si el rol no puede leer clientes, el aviso simplemente no aparece: es
+   * informativo y no debe convertirse en un bloqueo por falta de permisos.
+   */
+  const { data: client } = useClient(sale.clientId);
+  const exigeRnc = ncfType === 'E31' || ncfType === 'E45';
+  const clienteSinRnc =
+    client !== undefined && !/rnc/i.test(client.documentTypeName ?? '');
 
   if (!can('invoices:read')) return null;
 
@@ -117,6 +128,27 @@ export function SaleInvoicePanel({ sale }: { sale: Sale }) {
               <p className="text-xs leading-relaxed text-muted-foreground">
                 {NCF_TYPE_HINTS[ncfType]}
               </p>
+
+              {/*
+                El tipo de e-CF no lo valida nadie contra el receptor: ni este
+                panel —que solo recibia la venta, sin el documento del cliente—
+                ni `CreateInvoiceUseCase`, que lo guarda tal cual. Un E31 emitido
+                a una cedula es un comprobante mal tipificado ante la DGII, y se
+                descubre tarde.
+
+                Es un aviso, no un candado: el tipo de documento es texto libre
+                del catalogo y no da para decidir por el usuario. Pero lo pone
+                delante en el momento de elegir.
+              */}
+              {exigeRnc && clienteSinRnc && (
+                <p className="rounded-lg border border-warning/30 bg-warning/8 px-3 py-2.5 text-xs leading-relaxed">
+                  <strong className="font-semibold">{ncfType}</strong> espera un receptor con RNC, y{' '}
+                  {sale.clientName} esta registrado con{' '}
+                  <strong className="font-medium">{client?.documentTypeName}</strong>. Si no es un
+                  contribuyente, lo que corresponde es <strong className="font-medium">E32</strong>{' '}
+                  de consumo.
+                </p>
+              )}
             </div>
 
             <Button

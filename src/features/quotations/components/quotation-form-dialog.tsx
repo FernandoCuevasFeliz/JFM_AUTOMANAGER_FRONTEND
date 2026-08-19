@@ -22,10 +22,13 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useCurrencies } from '@/features/catalogs/hooks';
 import { ClientPicker } from '@/features/clients/components/client-picker';
+import { useVehicle } from '@/features/vehicles/hooks';
 import { VehiclePicker } from '@/features/vehicles/components/vehicle-picker';
 import { addDaysCivil, todayCivil } from '@/lib/dates';
 import { handleFormError } from '@/lib/errors';
+import { REPORTING_CURRENCY, formatMoney, formatPercentage, isReportingCurrency } from '@/lib/money';
 import { QUOTABLE_VEHICLE_STATUSES } from '@/lib/status';
+import { cn } from '@/lib/utils';
 import { diffPayload, isEmptyPayload } from '@/lib/zod-helpers';
 import { useCreateQuotation, useUpdateQuotation } from '../hooks';
 import {
@@ -81,6 +84,8 @@ export function QuotationFormDialog({
     control,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     setError,
     formState: { errors, isSubmitting },
   } = form;
@@ -88,6 +93,35 @@ export function QuotationFormDialog({
   React.useEffect(() => {
     if (open) reset(defaultValues);
   }, [open, defaultValues, reset]);
+
+  /*
+   * Precio de lista de la unidad, como referencia.
+   *
+   * Son dos numeros distintos a proposito: el de lista es sugerido y puede
+   * cambiar manana, mientras que el cotizado queda congelado en el documento
+   * que se le entrego al cliente. Pero que sean campos separados no obliga a
+   * que el vendedor se aprenda la cifra de memoria: se veia en el desplegable
+   * al elegir la unidad y desaparecia al seleccionarla. El formulario de venta
+   * ya acompanaba asi; este no.
+   *
+   * `vehicles.sale_price` va en la moneda de reporte y no tiene columna de
+   * moneda. Y `quotations` —a diferencia de `sales`— no guarda tasa de cambio,
+   * asi que aqui no hay con que convertir: cotizando en divisa, la lista se
+   * ensena como dato en pesos y la conversion la hace una persona.
+   */
+  const currencyId = watch('currencyId');
+  const currency = currencies.find((item) => item.id === currencyId);
+  const isDop = isReportingCurrency(currency?.code);
+
+  const vehicleId = watch('vehicleId');
+  const selectedVehicle = useVehicle(vehicleId || undefined).data;
+  const listPrice = selectedVehicle?.salePrice ?? null;
+
+  const quotedPrice = Number(watch('quotedPrice'));
+  const priceGap =
+    isDop && listPrice !== null && Number.isFinite(quotedPrice) && quotedPrice > 0
+      ? Math.round((quotedPrice - listPrice) * 100) / 100
+      : null;
 
   const onSubmit = handleSubmit(async (values) => {
     try {
@@ -109,6 +143,20 @@ export function QuotationFormDialog({
         const payload = diffPayload(original, next);
         if (isEmptyPayload(payload)) {
           onOpenChange(false);
+          return;
+        }
+
+        /*
+         * La vigencia solo se juzga si de verdad cambia, igual que hace
+         * `update-quotation` en el servidor. Una cotizacion aprobada cuyo plazo
+         * ya paso —porque el barrido de vencimientos aun no ha corrido— se tiene
+         * que poder editar para subirle el precio sin obligar a tocar la fecha.
+         */
+        if (payload.validUntil !== undefined && payload.validUntil < todayCivil()) {
+          setError('validUntil', {
+            type: 'manual',
+            message: 'La vigencia no puede ser anterior a hoy',
+          });
           return;
         }
 
@@ -206,15 +254,68 @@ export function QuotationFormDialog({
               />
             </FormField>
 
-            <FormField label="Precio cotizado" htmlFor="quotedPrice" error={errors.quotedPrice} required>
-              <Input
-                {...fieldAria('quotedPrice', errors.quotedPrice)}
-                type="number"
-                step="0.01"
-                min={0}
-                placeholder="0.00"
-                {...register('quotedPrice')}
-              />
+            <FormField
+              label="Precio cotizado"
+              htmlFor="quotedPrice"
+              error={errors.quotedPrice}
+              required
+              hint={
+                listPrice !== null
+                  ? `Precio de lista: ${formatMoney(listPrice, REPORTING_CURRENCY)}`
+                  : undefined
+              }
+            >
+              <div className="flex flex-col gap-1.5">
+                <div className="flex gap-2">
+                  <Input
+                    {...fieldAria('quotedPrice', errors.quotedPrice)}
+                    type="number"
+                    step="0.01"
+                    min={0}
+                    placeholder="0.00"
+                    className="num"
+                    {...register('quotedPrice')}
+                  />
+                  {/*
+                    Solo en pesos: el precio de lista esta en la moneda de
+                    reporte, y volcarlo tal cual en una cotizacion en dolares
+                    pondria 1.200.000 dolares.
+                  */}
+                  {listPrice !== null && isDop && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setValue('quotedPrice', listPrice, { shouldValidate: true })}
+                    >
+                      Usar lista
+                    </Button>
+                  )}
+                </div>
+
+                {/* La desviacion se muestra, no se bloquea: rebajar es normal. */}
+                {priceGap !== null && Math.abs(priceGap) >= 0.01 && listPrice !== null && (
+                  <p
+                    className={cn(
+                      'text-xs leading-relaxed',
+                      priceGap < 0 ? 'text-warning' : 'text-success',
+                    )}
+                  >
+                    {priceGap < 0 ? 'Por debajo de lista: ' : 'Por encima de lista: '}
+                    <span className="num font-medium">
+                      {formatMoney(Math.abs(priceGap), REPORTING_CURRENCY)}
+                    </span>
+                    {listPrice > 0 && <> ({formatPercentage(Math.abs((priceGap / listPrice) * 100))})</>}
+                  </p>
+                )}
+
+                {listPrice !== null && !isDop && currency && (
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    La lista esta en {REPORTING_CURRENCY} y cotizas en {currency.code}: la
+                    conversion no la hace el sistema, porque una cotizacion no guarda tasa de
+                    cambio.
+                  </p>
+                )}
+              </div>
             </FormField>
 
             <FormField label="Valida hasta" htmlFor="validUntil" error={errors.validUntil} required>

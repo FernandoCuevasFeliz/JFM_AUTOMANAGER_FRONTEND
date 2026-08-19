@@ -46,6 +46,8 @@ export interface VehicleProfitability {
   readonly totalCostConverted: number;
   /** Todo lo relativo a la venta es `null` mientras la unidad no se venda. */
   readonly saleId: string | null;
+  /** Linea de la venta que contiene esta unidad. */
+  readonly saleItemId: string | null;
   readonly saleNumber: string | null;
   readonly saleStatus: SaleStatus | null;
   readonly saleDate: string | null;
@@ -77,14 +79,24 @@ export interface AccountReceivable {
   readonly clientId: string;
   readonly clientName: string;
   readonly clientPhone: string;
-  readonly vehicleId: string;
-  readonly chassisNumber: string;
+  /** Unidades que siguen vendidas y unidades devueltas. */
+  readonly activeItems: number;
+  readonly returnedItems: number;
+  /** Chasis de los vehiculos vigentes de la venta. */
+  readonly chassisNumbers: string[];
   readonly salespersonId: string;
   readonly salespersonName: string;
   readonly currencyCode: string;
   readonly exchangeRate: number;
+  /** Suma de las lineas vigentes: un vehiculo devuelto deja de contar. */
   readonly salePrice: number;
   readonly totalPaid: number;
+  readonly totalRefunded: number;
+  /**
+   * `salePrice` − (cobrado − reembolsado). Los reembolsos **suman** al saldo:
+   * devolverle dinero al cliente deshace un cobro, asi que ese importe vuelve a
+   * estar pendiente sobre lo que quede vendido.
+   */
   readonly pendingBalance: number;
   readonly pendingBalanceConverted: number;
   /** Dias transcurridos desde la fecha de la venta. */
@@ -114,7 +126,10 @@ export interface MonthRangeParams {
 export interface MonthlySalesRow {
   readonly month: ReportMonth;
   readonly currencyCode: string;
+  /** Documentos de venta. */
   readonly salesCount: number;
+  /** Unidades entregadas. Solo cuentan las lineas vigentes. */
+  readonly vehiclesCount: number;
   readonly totalAmount: number;
   readonly totalAmountConverted: number;
 }
@@ -143,6 +158,28 @@ export interface MonthlyExpensesRow {
 export interface MonthlyExpensesParams extends MonthRangeParams {
   categoryId?: string;
   scope?: ExpenseScope;
+}
+
+// --- Devoluciones -----------------------------------------------------------
+
+/**
+ * Devoluciones por mes.
+ *
+ * Leido junto al reporte de ventas da la **tasa de devolucion** del periodo:
+ * cuantas unidades volvieron sobre cuantas se entregaron.
+ */
+export interface MonthlyReturnsRow {
+  readonly month: ReportMonth;
+  readonly currencyCode: string;
+  /** Unidades devueltas. */
+  readonly returnedCount: number;
+  /** Ventas distintas afectadas por una devolucion en el mes. */
+  readonly salesCount: number;
+  readonly totalAmount: number;
+  readonly totalAmountConverted: number;
+  /** Dinero efectivamente devuelto al cliente por esas unidades. */
+  readonly totalRefunded: number;
+  readonly totalRefundedConverted: number;
 }
 
 // --- Inventario --------------------------------------------------------------

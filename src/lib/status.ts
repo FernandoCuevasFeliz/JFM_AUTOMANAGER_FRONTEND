@@ -68,8 +68,17 @@ export function isCommerciallyManagedStatus(status: VehicleStatus): boolean {
 /**
  * Destinos que el selector de estado puede ofrecer: los validos desde el
  * estado actual, menos los que solo fija el ciclo comercial.
+ *
+ * El filtro va tambien sobre el ORIGEN. Antes solo miraba el destino, asi que
+ * desde `sold` devolvia `['in_inventory']` —una accion que el endpoint manual
+ * rechaza, porque una unidad vendida vuelve a inventario cancelando su venta, no
+ * cambiandole el estado a mano—. Hoy no se nota porque el dialogo lo tapa por su
+ * cuenta con `isCommerciallyManagedStatus`, pero la trampa quedaba puesta para
+ * el siguiente que llamara a esta funcion.
  */
 export function assignableVehicleStatuses(from: VehicleStatus): VehicleStatus[] {
+  if (isCommerciallyManagedStatus(from)) return [];
+
   return VEHICLE_STATUS_TRANSITIONS[from].filter((status) =>
     MANUALLY_ASSIGNABLE_VEHICLE_STATUSES.includes(status),
   );
@@ -80,6 +89,19 @@ export const RESERVABLE_VEHICLE_STATUSES: readonly VehicleStatus[] = ['in_invent
 export const SELLABLE_VEHICLE_STATUSES: readonly VehicleStatus[] = ['in_inventory', 'reserved'];
 export const QUOTABLE_VEHICLE_STATUSES: readonly VehicleStatus[] = VEHICLE_STATUSES.filter(
   (status) => status !== 'sold',
+);
+
+/**
+ * Unidades que pueden entrar en una compra.
+ *
+ * Una compra es la ENTRADA de la unidad al inventario, asi que nada que ya este
+ * en el ciclo comercial: una unidad vendida o reservada no se acaba de comprar.
+ * Ademas cada vehiculo pertenece a una sola compra (`purchase_items.vehicle_id`
+ * es UNIQUE y el backend responde `VehicleAlreadyPurchasedError`), pero eso el
+ * selector no lo puede saber; al menos no ofrece lo que es imposible por estado.
+ */
+export const PURCHASABLE_VEHICLE_STATUSES: readonly VehicleStatus[] = VEHICLE_STATUSES.filter(
+  (status) => !isCommerciallyManagedStatus(status),
 );
 
 // --- Compra ------------------------------------------------------------------
@@ -240,11 +262,17 @@ export const FISCAL_DOC_STATUSES = Object.keys(
 
 /**
  * Una venta facturada no se puede cancelar: primero hay que anular el
- * comprobante con notas de credito que cubran su importe (§7 de API.md). La UI
- * lo usa para explicar el orden en vez de dejar que el backend devuelva un 409.
+ * comprobante. La UI lo usa para explicar el orden en vez de dejar que el
+ * backend devuelva un 409.
+ *
+ * Bloquea **todo comprobante que no este anulado**, incluido el rechazado.
+ * Antes solo listaba `pending` e `issued`, y no era lo que hace el servidor:
+ * `CancelSaleUseCase` rechaza con `SaleHasActiveInvoiceError` en cuanto existe
+ * una factura con `status !== 'cancelled'`. Un rechazo de la DGII se corrige y
+ * se reintenta —el comprobante sigue vivo—, asi que tambien retiene la venta.
  */
 export function blocksSaleCancellation(status: FiscalDocStatus): boolean {
-  return status === 'pending' || status === 'issued';
+  return status !== 'cancelled';
 }
 
 // --- Cliente -----------------------------------------------------------------

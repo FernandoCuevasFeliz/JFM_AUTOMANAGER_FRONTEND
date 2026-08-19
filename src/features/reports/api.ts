@@ -9,6 +9,7 @@ import type {
   MonthRangeParams,
   MonthlyExpensesParams,
   MonthlyExpensesRow,
+  MonthlyReturnsRow,
   MonthlySalesRow,
   SalesBySalespersonParams,
   SalespersonRow,
@@ -42,6 +43,11 @@ export const reportsApi = {
 
   salesBySalesperson(params: SalesBySalespersonParams = {}) {
     return api.get<SalespersonRow[]>('/reports/sales-by-salesperson', params as QueryParams);
+  },
+
+  /** Devoluciones por mes: unidades que volvieron y dinero reintegrado. */
+  monthlyReturns(params: MonthRangeParams = {}) {
+    return api.get<MonthlyReturnsRow[]>('/reports/returns-monthly', params as QueryParams);
   },
 
   monthlyExpenses(params: MonthlyExpensesParams = {}) {

@@ -3,7 +3,7 @@ import { clientDisplayName } from '@/features/clients/types';
 import type { Sale, SalePayment } from '@/features/sales/types';
 import type { Vehicle } from '@/features/vehicles/types';
 import { moneyToWords } from '@/lib/number-to-words';
-import { TAX_INCLUDED, TAX_LABEL, TAX_RATE } from './company';
+import { round2, splitTax } from './tax';
 import type { CreditNote, Invoice, NcfType } from './types';
 
 /**
@@ -70,36 +70,6 @@ export interface InvoiceView {
   readonly creditNotes: readonly CreditNote[];
 }
 
-function round2(value: number): number {
-  return Math.round(value * 100) / 100;
-}
-
-/**
- * Desglose del impuesto.
- *
- * Con `TAX_INCLUDED` el precio pactado es el total y la base sale hacia atras;
- * el impuesto se calcula como la **diferencia** contra el total, no como
- * `base * tasa`, para que subtotal + impuesto sea exactamente el total aunque
- * el redondeo no acompañe.
- */
-function splitTax(salePrice: number) {
-  const base = { taxRate: TAX_RATE, taxLabel: TAX_LABEL, taxIncluded: TAX_INCLUDED };
-
-  if (TAX_RATE <= 0) {
-    return { ...base, subtotal: round2(salePrice), taxAmount: 0, total: round2(salePrice) };
-  }
-
-  if (TAX_INCLUDED) {
-    const total = round2(salePrice);
-    const subtotal = round2(total / (1 + TAX_RATE));
-    return { ...base, subtotal, taxAmount: round2(total - subtotal), total };
-  }
-
-  const subtotal = round2(salePrice);
-  const taxAmount = round2(subtotal * TAX_RATE);
-  return { ...base, subtotal, taxAmount, total: round2(subtotal + taxAmount) };
-}
-
 export function buildInvoiceView(
   invoice: Invoice,
   sale?: Sale | null,
@@ -108,20 +78,50 @@ export function buildInvoiceView(
 ): InvoiceView {
   const totals = splitTax(invoice.salePrice);
 
-  const description = sale
-    ? `${sale.vehicleBrandName} ${sale.vehicleModelName} ${sale.vehicleYear}`
-    : 'Vehiculo';
+  /*
+   * Una linea del impreso por cada vehiculo de la venta.
+   *
+   * El comprobante ampara TODAS las unidades, devueltas incluidas: su importe
+   * es lo que se facturo y no baja porque el cliente devuelva algo — eso lo
+   * corrige la nota de credito. Por eso no se filtran las lineas por estado.
+   *
+   * Si no hay permiso para leer la venta, se cae a los chasis que el propio
+   * comprobante ya trae: menos detalle, pero el papel sale.
+   */
+  const lineasVenta = sale?.items ?? [];
 
-  const details = [
-    `Chasis ${invoice.vehicleChassisNumber}`,
-    vehicle?.color ? `Color ${vehicle.color}` : null,
-    vehicle?.transmissionType ? `Transmision ${vehicle.transmissionType}` : null,
-    vehicle?.fuelType ? `Combustible ${vehicle.fuelType}` : null,
-    vehicle?.engineNumber ? `Motor ${vehicle.engineNumber}` : null,
-    typeof vehicle?.mileage === 'number'
-      ? `${new Intl.NumberFormat('es-DO').format(vehicle.mileage)} km`
-      : null,
-  ].filter((value): value is string => Boolean(value));
+  const lines: InvoiceLine[] =
+    lineasVenta.length > 0
+      ? lineasVenta.map((item) => ({
+          description: `${item.vehicleBrandName} ${item.vehicleModelName} ${item.vehicleYear}`,
+          details: [
+            `Chasis ${item.vehicleChassisNumber}`,
+            item.status === 'returned' ? 'Unidad devuelta' : null,
+            ...(vehicle && vehicle.id === item.vehicleId ? detallesDeFicha(vehicle) : []),
+          ].filter((value): value is string => Boolean(value)),
+          quantity: 1,
+          unitPrice: item.salePrice,
+          total: item.salePrice,
+        }))
+      : (invoice.vehicleChassisNumbers ?? []).map((chassis) => ({
+          description: 'Vehiculo',
+          details: [`Chasis ${chassis}`],
+          quantity: 1,
+          unitPrice: 0,
+          total: 0,
+        }));
+
+  /*
+   * El desglose de impuesto se aplica al TOTAL, no linea a linea: repartirlo
+   * por unidad y volver a sumar deja descuadres de centavos contra el total que
+   * el backend calculo.
+   */
+  const proporcion = totals.total > 0 ? totals.subtotal / totals.total : 1;
+  const lineasConBase = lines.map((line) => ({
+    ...line,
+    unitPrice: round2(line.unitPrice * proporcion),
+    total: round2(line.total * proporcion),
+  }));
 
   return {
     ncfType: invoice.ncfType,
@@ -148,15 +148,7 @@ export function buildInvoiceView(
       email: client?.email ?? null,
     },
 
-    lines: [
-      {
-        description,
-        details,
-        quantity: 1,
-        unitPrice: totals.subtotal,
-        total: totals.subtotal,
-      },
-    ],
+    lines: lineasConBase,
 
     totals: {
       ...totals,
@@ -177,4 +169,17 @@ export function buildInvoiceView(
     // deberia depender de eso.
     creditNotes: (invoice.creditNotes ?? []).filter((note) => note.status === 'issued'),
   };
+}
+
+/** Detalles que solo estan en la ficha del vehiculo, no en la venta. */
+function detallesDeFicha(vehicle: Vehicle): string[] {
+  return [
+    vehicle.color ? `Color ${vehicle.color}` : null,
+    vehicle.transmissionType ? `Transmision ${vehicle.transmissionType}` : null,
+    vehicle.fuelType ? `Combustible ${vehicle.fuelType}` : null,
+    vehicle.engineNumber ? `Motor ${vehicle.engineNumber}` : null,
+    typeof vehicle.mileage === 'number'
+      ? `${new Intl.NumberFormat('es-DO').format(vehicle.mileage)} km`
+      : null,
+  ].filter((value): value is string => Boolean(value));
 }

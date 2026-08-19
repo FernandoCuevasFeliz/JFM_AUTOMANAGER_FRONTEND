@@ -43,7 +43,20 @@ export const rejectSchema = z.object({
 
 export type RejectValues = z.infer<typeof rejectSchema>;
 
+/**
+ * Nota de credito.
+ *
+ * `saleItemId` cambia el techo: atada a una linea no puede pasar del precio de
+ * *esa* unidad; sin ella, el techo es el importe vigente de la factura. Ademas
+ * es lo que habilita despues devolver el vehiculo, porque un vehiculo facturado
+ * no se devuelve sin acreditarlo antes (§7 de API.md).
+ */
 export const creditNoteSchema = z.object({
+  saleItemId: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((value) => (value === '' || value === undefined ? null : value)),
   reason: requiredText(500, 'El motivo de la nota'),
   amount: positiveMoney,
 });

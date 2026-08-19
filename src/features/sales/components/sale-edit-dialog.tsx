@@ -21,24 +21,20 @@ import {
 } from '@/components/ui/select';
 import { useUsers } from '@/features/users/hooks';
 import { userFullName } from '@/features/users/types';
-import { useVehicle } from '@/features/vehicles/hooks';
 import { handleFormError } from '@/lib/errors';
-import { formatMoney, formatPercentage, isReportingCurrency } from '@/lib/money';
-import { cn } from '@/lib/utils';
+import { formatMoney, isReportingCurrency } from '@/lib/money';
 import { useUpdateSale } from '../hooks';
 import { type UpdateSaleValues, updateSaleSchema } from '../schemas';
 import type { Sale } from '../types';
 
 /**
- * Edicion de una venta ya registrada.
+ * Edicion de la CABECERA de una venta.
  *
- * Solo cuatro campos: precio, tasa, fecha y vendedor. Ni el cliente, ni el
- * vehiculo, ni la moneda se tocan despues — cambiarlos no seria corregir un
- * error de tecleo, seria otra venta distinta, y ademas arrastraria el estado del
- * vehiculo y los pagos ya registrados en esa moneda.
- *
- * El backend ademas impide bajar el precio por debajo de lo ya cobrado, asi que
- * aqui se avisa antes de intentarlo.
+ * Tres campos: tasa, fecha y vendedor. El precio no esta aqui —y no es un
+ * olvido—: desde que una venta lleva varios vehiculos, "el precio" es la suma
+ * de las lineas y se corrige linea a linea desde la ficha. El cliente y la
+ * moneda tampoco se tocan: cambiarlos no seria corregir un tecleo, seria otra
+ * venta, y arrastraria los pagos ya registrados en esa divisa.
  */
 export function SaleEditDialog({
   sale,
@@ -51,12 +47,10 @@ export function SaleEditDialog({
 }) {
   const updateSale = useUpdateSale(sale.id);
   const salespeople = useUsers({ isActive: true, pageSize: 100 });
-  const vehicle = useVehicle(sale.vehicleId).data;
 
   const form = useForm<UpdateSaleValues>({
     resolver: zodResolver(updateSaleSchema),
     defaultValues: {
-      salePrice: sale.salePrice,
       exchangeRate: sale.exchangeRate,
       saleDate: sale.saleDate,
       salespersonId: sale.salespersonId,
@@ -68,8 +62,6 @@ export function SaleEditDialog({
     control,
     handleSubmit,
     reset,
-    watch,
-    setValue,
     setError,
     formState: { errors, isSubmitting },
   } = form;
@@ -77,7 +69,6 @@ export function SaleEditDialog({
   React.useEffect(() => {
     if (open) {
       reset({
-        salePrice: sale.salePrice,
         exchangeRate: sale.exchangeRate,
         saleDate: sale.saleDate,
         salespersonId: sale.salespersonId,
@@ -86,17 +77,6 @@ export function SaleEditDialog({
   }, [open, reset, sale]);
 
   const esPesos = isReportingCurrency(sale.currencyCode);
-  const nuevoPrecio = Number(watch('salePrice'));
-
-  // El backend rechaza un precio por debajo de lo ya cobrado (§7 de API.md).
-  const porDebajoDeCobrado =
-    Number.isFinite(nuevoPrecio) && nuevoPrecio + 0.01 < sale.totalPaid;
-
-  const listPrice = vehicle?.salePrice ?? null;
-  const desviacion =
-    listPrice !== null && Number.isFinite(nuevoPrecio) && nuevoPrecio > 0
-      ? Math.round((nuevoPrecio - listPrice) * 100) / 100
-      : null;
 
   const onSubmit = handleSubmit(async (values) => {
     try {
@@ -104,7 +84,7 @@ export function SaleEditDialog({
       onOpenChange(false);
     } catch (error) {
       handleFormError(error, setError, {
-        knownFields: ['salePrice', 'exchangeRate', 'saleDate', 'salespersonId'],
+        knownFields: ['exchangeRate', 'saleDate', 'salespersonId'],
       });
     }
   });
@@ -115,68 +95,23 @@ export function SaleEditDialog({
         <DialogHeader>
           <DialogTitle>Editar {sale.saleNumber}</DialogTitle>
           <DialogDescription>
-            El cliente, el vehiculo y la moneda no se modifican: cambiarlos seria otra venta.
+            El precio se corrige por vehiculo, en la ficha. El cliente y la moneda no se modifican.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
-          <FormField
-            label="Precio de venta"
-            htmlFor="salePrice"
-            error={errors.salePrice}
-            required
-            hint={
-              listPrice !== null
-                ? `Precio de lista: ${formatMoney(listPrice, sale.currencyCode)} · cobrado: ${formatMoney(sale.totalPaid, sale.currencyCode)}`
-                : `Ya cobrado: ${formatMoney(sale.totalPaid, sale.currencyCode)}`
-            }
-          >
-            <div className="flex gap-2">
-              <Input
-                {...fieldAria('salePrice', errors.salePrice)}
-                type="number"
-                step="0.01"
-                min={0}
-                className="num"
-                autoFocus
-                {...register('salePrice')}
-              />
-              {listPrice !== null && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setValue('salePrice', listPrice, { shouldValidate: true })}
-                >
-                  Usar lista
-                </Button>
-              )}
-            </div>
-          </FormField>
-
-          {porDebajoDeCobrado && (
-            <p role="alert" className="text-[13px] font-medium text-danger">
-              El precio no puede quedar por debajo de lo ya cobrado (
-              {formatMoney(sale.totalPaid, sale.currencyCode)}). Anula un cobro primero.
-            </p>
-          )}
-
-          {!porDebajoDeCobrado && desviacion !== null && Math.abs(desviacion) >= 0.01 && (
-            <p
-              className={cn(
-                'text-[13px] leading-relaxed',
-                desviacion < 0 ? 'text-warning' : 'text-success',
-              )}
-            >
-              {desviacion < 0 ? 'Queda por debajo' : 'Queda por encima'} del precio de lista en{' '}
-              <span className="num font-medium">
-                {formatMoney(Math.abs(desviacion), sale.currencyCode)}
-              </span>
-              {listPrice !== null && listPrice > 0 && (
-                <> ({formatPercentage(Math.abs((desviacion / listPrice) * 100))})</>
-              )}
-              .
-            </p>
-          )}
+          {/*
+            El total no se edita aqui: es la suma de las lineas. Se muestra para
+            situar, con un enlace mental a donde si se corrige.
+          */}
+          <p className="rounded-lg border border-border bg-muted/40 px-3.5 py-3 text-[13px] leading-relaxed text-muted-foreground">
+            Total actual:{' '}
+            <strong className="num font-semibold text-foreground">
+              {formatMoney(sale.salePrice, sale.currencyCode)}
+            </strong>{' '}
+            · suma de {sale.items.filter((item) => item.status === 'active').length} unidad(es)
+            vigente(s). Para cambiar un precio, editalo en su vehiculo desde la ficha de la venta.
+          </p>
 
           <FormRow columns={2}>
             <FormField label="Fecha de venta" htmlFor="saleDate" error={errors.saleDate} required>
@@ -236,7 +171,7 @@ export function SaleEditDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" loading={isSubmitting} disabled={porDebajoDeCobrado}>
+            <Button type="submit" loading={isSubmitting}>
               Guardar cambios
             </Button>
           </DialogFooter>

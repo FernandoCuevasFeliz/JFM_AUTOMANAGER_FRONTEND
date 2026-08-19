@@ -21,7 +21,7 @@ import { VehiclePicker } from '@/features/vehicles/components/vehicle-picker';
 import { todayCivil } from '@/lib/dates';
 import { handleFormError } from '@/lib/errors';
 import { REPORTING_CURRENCY, formatMoney, isReportingCurrency } from '@/lib/money';
-import { PURCHASE_STATUS_META } from '@/lib/status';
+import { PURCHASABLE_VEHICLE_STATUSES, PURCHASE_STATUS_META } from '@/lib/status';
 import { diffPayload, isEmptyPayload } from '@/lib/zod-helpers';
 import { useCreatePurchase, useUpdatePurchase } from '../hooks';
 import {
@@ -341,6 +341,7 @@ export function PurchaseForm({ purchase }: { purchase?: Purchase }) {
                             id={`items.${index}.vehicleId`}
                             value={itemField.value || null}
                             onChange={itemField.onChange}
+                            statuses={PURCHASABLE_VEHICLE_STATUSES}
                             invalid={Boolean(errors.items?.[index]?.vehicleId)}
                           />
                         )}

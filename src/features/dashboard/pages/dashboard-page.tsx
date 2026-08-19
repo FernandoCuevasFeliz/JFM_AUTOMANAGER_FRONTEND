@@ -122,7 +122,11 @@ export function DashboardPage() {
             icon={BadgeDollarSign}
             label="Ventas registradas"
             value={formatNumber(salesSummary.data?.totalSales ?? 0)}
-            hint={`${formatMoneyCompact(salesSummary.data?.totalAmount, reporting)} facturados`}
+            /*
+             * Documentos y unidades son cifras distintas desde que una venta
+             * puede llevar varios vehiculos: se dicen las dos.
+             */
+            hint={`${formatNumber(salesSummary.data?.totalVehicles ?? 0)} unidades · ${formatMoneyCompact(salesSummary.data?.totalAmount, reporting)}`}
             to="/sales"
           />
           <MetricCard

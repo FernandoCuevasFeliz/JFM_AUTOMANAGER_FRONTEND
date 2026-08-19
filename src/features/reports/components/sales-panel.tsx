@@ -23,7 +23,11 @@ import { CHART_GRID, CHART_TOOLTIP_STYLE, seriesColor, useChartStyles } from '@/
 import { formatCivilMonth } from '@/lib/dates';
 import { formatMoney, formatMoneyCompact, formatNumber } from '@/lib/money';
 import { MonthRangeFilter, ReportCard, ReportTotals } from './report-shell';
-import { useMonthlySalesReport, useSalesBySalesperson } from '../hooks';
+import {
+  useMonthlyReturnsReport,
+  useMonthlySalesReport,
+  useSalesBySalesperson,
+} from '../hooks';
 import { REPORT_CURRENCY, type MonthRangeParams, monthKey, sumConverted } from '../types';
 
 export function SalesPanel() {
@@ -35,6 +39,7 @@ export function SalesPanel() {
 
   const monthly = useMonthlySalesReport(range);
   const bySalesperson = useSalesBySalesperson(range);
+  const returns = useMonthlyReturnsReport(range);
 
   const monthlyRows = monthly.data ?? [];
   const salespersonRows = bySalesperson.data ?? [];
@@ -69,16 +74,21 @@ export function SalesPanel() {
 
   /** Un vendedor puede aparecer en varios meses y monedas: se pliega igual. */
   const porVendedor = React.useMemo(() => {
-    const mapa = new Map<string, { nombre: string; total: number; ventas: number }>();
+    const mapa = new Map<
+      string,
+      { nombre: string; total: number; ventas: number; unidades: number }
+    >();
 
     for (const row of salespersonRows) {
       const actual = mapa.get(row.salespersonId) ?? {
         nombre: row.salespersonName,
         total: 0,
         ventas: 0,
+        unidades: 0,
       };
       actual.total += row.totalAmountConverted;
       actual.ventas += row.salesCount;
+      actual.unidades += row.vehiclesCount;
       mapa.set(row.salespersonId, actual);
     }
 
@@ -87,7 +97,23 @@ export function SalesPanel() {
 
   const facturado = sumConverted(monthlyRows, (row) => row.totalAmountConverted);
   const operaciones = monthlyRows.reduce((total, row) => total + row.salesCount, 0);
+  /*
+   * Documentos y unidades son dos cifras distintas desde que una venta puede
+   * llevar varios vehiculos. El ticket promedio se calcula por DOCUMENTO, que
+   * es lo que mide el valor de una operacion comercial.
+   */
+  const unidades = monthlyRows.reduce((total, row) => total + row.vehiclesCount, 0);
   const ticket = operaciones > 0 ? facturado / operaciones : 0;
+
+  /*
+   * Tasa de devolucion: unidades devueltas sobre unidades entregadas. Es la
+   * lectura que da sentido al reporte de devoluciones — un numero de unidades
+   * devueltas, solo, no dice si es mucho o poco.
+   */
+  const returnRows = returns.data ?? [];
+  const devueltas = returnRows.reduce((total, row) => total + row.returnedCount, 0);
+  const reintegrado = sumConverted(returnRows, (row) => row.totalRefundedConverted);
+  const tasaDevolucion = unidades > 0 ? (devueltas / unidades) * 100 : 0;
 
   return (
     <div className="flex flex-col gap-4">
@@ -105,8 +131,8 @@ export function SalesPanel() {
             value: formatMoney(ticket, REPORT_CURRENCY),
           },
           {
-            label: 'Vendedores activos',
-            value: formatNumber(porVendedor.length),
+            label: 'Unidades entregadas',
+            value: formatNumber(unidades),
           },
         ]}
       />
@@ -237,6 +263,7 @@ export function SalesPanel() {
               <TableRow className="hover:bg-transparent">
                 <TableHead>Vendedor</TableHead>
                 <TableHead className="text-right">Ventas</TableHead>
+                <TableHead className="text-right">Unidades</TableHead>
                 <TableHead className="text-right">Facturado</TableHead>
                 <TableHead className="text-right">Ticket promedio</TableHead>
               </TableRow>
@@ -246,6 +273,9 @@ export function SalesPanel() {
                 <TableRow key={row.nombre}>
                   <TableCell className="font-medium">{row.nombre}</TableCell>
                   <TableCell className="num text-right">{formatNumber(row.ventas)}</TableCell>
+                  <TableCell className="num text-right text-muted-foreground">
+                    {formatNumber(row.unidades)}
+                  </TableCell>
                   <TableCell className="num text-right">
                     {formatMoney(row.total, REPORT_CURRENCY)}
                   </TableCell>
@@ -258,6 +288,88 @@ export function SalesPanel() {
           </Table>
         </div>
       </ReportCard>
+      <ReportCard
+        title="Devoluciones"
+        description="Unidades que volvieron y dinero reintegrado en el periodo."
+        isLoading={returns.isLoading}
+        isError={returns.isError}
+        error={returns.error}
+        onRetry={() => void returns.refetch()}
+        isEmpty={returnRows.length === 0}
+        emptyLabel="Ninguna unidad se devolvio en el periodo."
+        height={220}
+      >
+        <div className="flex flex-col gap-4">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <ReportFigure label="Unidades devueltas" value={formatNumber(devueltas)} />
+            <ReportFigure
+              label="Tasa de devolucion"
+              value={`${tasaDevolucion.toFixed(1)} %`}
+              hint={`sobre ${formatNumber(unidades)} entregadas`}
+            />
+            <ReportFigure
+              label="Reintegrado"
+              value={formatMoney(reintegrado, REPORT_CURRENCY)}
+            />
+          </div>
+
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead>Mes</TableHead>
+                <TableHead className="text-right">Unidades</TableHead>
+                <TableHead className="text-right">Ventas afectadas</TableHead>
+                <TableHead className="text-right">Valor devuelto</TableHead>
+                <TableHead className="text-right">Reintegrado</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {returnRows.map((row, index) => (
+                <TableRow key={`${row.month}-${row.currencyCode}-${index}`}>
+                  <TableCell>{formatCivilMonth(monthKey(row.month))}</TableCell>
+                  <TableCell className="num text-right">
+                    {formatNumber(row.returnedCount)}
+                  </TableCell>
+                  <TableCell className="num text-right text-muted-foreground">
+                    {formatNumber(row.salesCount)}
+                  </TableCell>
+                  <TableCell className="num text-right">
+                    {formatMoney(row.totalAmountConverted, REPORT_CURRENCY)}
+                  </TableCell>
+                  <TableCell className="num text-right text-warning">
+                    {formatMoney(row.totalRefundedConverted, REPORT_CURRENCY)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Devolver el vehiculo y devolver el dinero son operaciones distintas: el valor devuelto
+            es lo que salio del total de las ventas, y el reintegro, lo que efectivamente volvio al
+            cliente. No tienen por que coincidir.
+          </p>
+        </div>
+      </ReportCard>
+    </div>
+  );
+}
+
+/** Cifra suelta dentro de una tarjeta de reporte. */
+function ReportFigure({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="label-micro text-muted-foreground">{label}</span>
+      <span className="num text-lg font-semibold leading-none">{value}</span>
+      {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
     </div>
   );
 }

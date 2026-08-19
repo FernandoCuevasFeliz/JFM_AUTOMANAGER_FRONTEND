@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as React from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { FormField, fieldAria } from '@/components/form-field';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,6 +12,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { handleFormError } from '@/lib/errors';
 import { formatMoney } from '@/lib/money';
@@ -23,6 +30,9 @@ import {
   issueSchema,
   rejectSchema,
 } from '../schemas';
+
+/** Valor centinela: Radix Select no admite `value=""` en un item. */
+const SIN_UNIDAD = '__general__';
 
 /**
  * Dialogos del ciclo fiscal.
@@ -236,6 +246,7 @@ export function CreditNoteDialog({
   onOpenChange,
   currencyCode,
   available,
+  items,
   loading,
   onSubmit,
 }: {
@@ -244,16 +255,19 @@ export function CreditNoteDialog({
   currencyCode: string;
   /** Importe que aun se puede acreditar, ya descontadas las notas pendientes. */
   available: number;
+  /** Vehiculos de la venta, para atar la nota a uno concreto. */
+  items?: { id: string; label: string; salePrice: number }[];
   loading: boolean;
   onSubmit: (values: CreditNoteValues) => Promise<unknown>;
 }) {
   const form = useForm<CreditNoteValues>({
     resolver: zodResolver(creditNoteSchema),
-    defaultValues: { reason: '', amount: '' as unknown as number },
+    defaultValues: { saleItemId: null, reason: '', amount: '' as unknown as number },
   });
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     setError,
@@ -263,18 +277,27 @@ export function CreditNoteDialog({
   } = form;
 
   React.useEffect(() => {
-    if (open) reset({ reason: '', amount: '' as unknown as number });
+    if (open) reset({ saleItemId: null, reason: '', amount: '' as unknown as number });
   }, [open, reset]);
 
+  const saleItemId = watch('saleItemId');
+  const unidad = items?.find((item) => item.id === saleItemId) ?? null;
+
+  /*
+   * `saleItemId` cambia el techo: atada a una linea no puede pasar del precio de
+   * ESA unidad; sin ella, el techo es el importe vigente de la factura.
+   */
+  const techo = unidad ? Math.min(unidad.salePrice, available) : available;
+
   const amount = Number(watch('amount'));
-  const excede = Number.isFinite(amount) && amount > available;
+  const excede = Number.isFinite(amount) && amount > techo;
 
   const submit = handleSubmit(async (values) => {
     try {
       await onSubmit(values);
       onOpenChange(false);
     } catch (error) {
-      handleFormError(error, setError, { knownFields: ['reason', 'amount'] });
+      handleFormError(error, setError, { knownFields: ['saleItemId', 'reason', 'amount'] });
     }
   });
 
@@ -290,11 +313,47 @@ export function CreditNoteDialog({
         </DialogHeader>
 
         <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
+          {items && items.length > 0 && (
+            <FormField
+              label="Unidad que la motiva"
+              htmlFor="saleItemId"
+              error={errors.saleItemId}
+              hint="Atarla a un vehiculo es lo que despues permite devolverlo."
+            >
+              <Controller
+                control={control}
+                name="saleItemId"
+                render={({ field }) => (
+                  <Select
+                    value={field.value ?? SIN_UNIDAD}
+                    onValueChange={(value) => field.onChange(value === SIN_UNIDAD ? null : value)}
+                  >
+                    <SelectTrigger id="saleItemId">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={SIN_UNIDAD}>Nota general de la factura</SelectItem>
+                      {items.map((item) => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </FormField>
+          )}
+
           <FormField
             label="Monto"
             htmlFor="amount"
             error={errors.amount}
-            hint={`Disponible para acreditar: ${formatMoney(available, currencyCode)}`}
+            hint={
+              unidad
+                ? `Maximo para esta unidad: ${formatMoney(techo, currencyCode)}`
+                : `Disponible para acreditar: ${formatMoney(available, currencyCode)}`
+            }
             required
           >
             <div className="flex gap-2">
@@ -313,7 +372,7 @@ export function CreditNoteDialog({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setValue('amount', available as never, { shouldValidate: true })}
+                onClick={() => setValue('amount', techo as never, { shouldValidate: true })}
               >
                 Todo
               </Button>
@@ -322,7 +381,8 @@ export function CreditNoteDialog({
 
           {excede && (
             <p role="alert" className="text-[13px] font-medium text-danger">
-              El monto supera lo disponible. Las notas pendientes tambien consumen importe.
+              El monto supera el maximo{unidad ? ' de esta unidad' : ' disponible'}. Las notas
+              pendientes tambien consumen importe.
             </p>
           )}
 

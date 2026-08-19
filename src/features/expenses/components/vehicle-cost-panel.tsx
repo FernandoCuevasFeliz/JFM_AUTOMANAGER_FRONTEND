@@ -44,6 +44,22 @@ export function VehicleCostPanel({ vehicleId }: { vehicleId: string }) {
         </CardHeader>
 
         <CardContent className="flex flex-col gap-5">
+          {/*
+            Una unidad puede existir sin compra: el alta de vehiculos permite
+            crearla directamente en inventario, y `vehicles` no tiene ningun
+            vinculo con `purchases` —el enlace vive en `purchase_items`—. Sin
+            compra, el costo de importacion es cero y el margen sale igual al
+            precio de venta integro, que es la cifra mas enganosa que puede dar
+            este panel. Se dice, en vez de mostrar un cero silencioso.
+          */}
+          {cost.purchaseCost === null && (
+            <p className="rounded-lg border border-warning/30 bg-warning/8 px-3.5 py-3 text-[13px] leading-relaxed">
+              Esta unidad no tiene ninguna compra registrada, asi que su costo de importacion no
+              esta contabilizado. Lo que ves abajo solo incluye los gastos imputados, y el margen
+              saldra inflado hasta que se registre la compra.
+            </p>
+          )}
+
           <section className="flex flex-col gap-2">
             <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Importacion

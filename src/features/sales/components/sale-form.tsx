@@ -1,7 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Link2 } from 'lucide-react';
 import * as React from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { Controller, FormProvider, useForm } from 'react-hook-form';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FormField, FormRow, FormSection, fieldAria } from '@/components/form-field';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,16 +19,16 @@ import {
 import { useAuth } from '@/features/auth/use-auth';
 import { useCurrencies, usePaymentMethods } from '@/features/catalogs/hooks';
 import { ClientPicker } from '@/features/clients/components/client-picker';
+import { useQuotation } from '@/features/quotations/hooks';
+import { useReservation } from '@/features/reservations/hooks';
 import { useUsers } from '@/features/users/hooks';
 import { userFullName } from '@/features/users/types';
-import { useVehicle } from '@/features/vehicles/hooks';
-import { VehiclePicker } from '@/features/vehicles/components/vehicle-picker';
 import { todayCivil } from '@/lib/dates';
 import { handleFormError } from '@/lib/errors';
-import { cn } from '@/lib/utils';
-import { REPORTING_CURRENCY, formatMoney, formatPercentage, isReportingCurrency } from '@/lib/money';
-import { SELLABLE_VEHICLE_STATUSES } from '@/lib/status';
+import { REPORTING_CURRENCY, formatMoney, isReportingCurrency } from '@/lib/money';
+import {  } from '@/lib/status';
 import { useCreateSale } from '../hooks';
+import { SaleItemsField } from './sale-items-field';
 import { SALE_FORM_FIELDS, type CreateSaleValues, createSaleSchema } from '../schemas';
 
 /**
@@ -36,14 +37,55 @@ import { SALE_FORM_FIELDS, type CreateSaleValues, createSaleSchema } from '../sc
  * Solo se vende una unidad `in_inventory` o `reserved` (§7 de API.md). Al
  * guardar, el backend pasa el vehiculo a `sold` y marca la reserva y la
  * cotizacion de origen como `converted`, todo en una transaccion.
+ *
+ * **El origen viaja en la URL** (`?reservationId=` / `?quotationId=`). No es un
+ * adorno: el backend solo marca `converted` la reserva y la cotizacion si
+ * recibe sus identificadores —no los deduce del vehiculo, porque una unidad
+ * puede acumular varias reservas y cotizaciones y no sabria cual cerrar—. Antes
+ * los botones «Registrar venta» de la reserva y de la cotizacion apuntaban a
+ * esta pantalla sin nada, asi que ninguna reserva llegaba nunca a convertirse y
+ * el deposito habia que teclearlo de memoria.
+ *
+ * Con el origen puesto, el servidor ademas exige que el cliente y el vehiculo
+ * coincidan con los del documento, asi que aqui quedan fijados.
  */
 export function SaleForm() {
   const navigate = useNavigate();
   const { user, can } = useAuth();
+  const [searchParams] = useSearchParams();
 
   const currencies = useCurrencies();
   const paymentMethods = usePaymentMethods();
   const createSale = useCreateSale();
+
+  const reservationId = searchParams.get('reservationId');
+  const reservationQuery = useReservation(reservationId ?? undefined);
+  const reservation = reservationQuery.data;
+
+  /*
+   * La cotizacion puede venir directa o heredada de la reserva. Se mandan las
+   * dos cosas cuando existen: el backend acepta una cotizacion ya `converted`
+   * si llega por la via de su reserva, y asi el enlace queda completo en la
+   * ficha de la venta.
+   */
+  const quotationId = searchParams.get('quotationId') ?? reservation?.quotationId ?? null;
+  const quotationQuery = useQuotation(quotationId ?? undefined);
+  const quotation = quotationQuery.data;
+
+  /*
+   * Se bloquea por tener el documento en la mano, no por que la URL lo
+   * mencione. Si la consulta falla —enlace viejo, reserva borrada, un rol sin
+   * permiso de lectura— el formulario se queda abierto y utilizable en vez de
+   * atrapar al usuario con el cliente y el vehiculo vacios y bloqueados.
+   */
+  const origenFijado = Boolean(reservation ?? quotation);
+  const origenCargando =
+    (Boolean(reservationId) && reservationQuery.isLoading) ||
+    (Boolean(quotationId) && quotationQuery.isLoading);
+  const origenIlegible =
+    Boolean(reservationId ?? searchParams.get('quotationId')) &&
+    !origenCargando &&
+    !origenFijado;
 
   /**
    * El rol `ventas` no tiene `users:read`, asi que no puede listar vendedores.
@@ -62,9 +104,8 @@ export function SaleForm() {
       reservationId: null,
       quotationId: null,
       clientId: '',
-      vehicleId: '',
+      items: [{ vehicleId: '', salePrice: '' as unknown as number }],
       currencyId: '',
-      salePrice: '' as unknown as number,
       exchangeRate: 1,
       saleDate: todayCivil(),
       salespersonId: user?.id ?? '',
@@ -77,9 +118,10 @@ export function SaleForm() {
     control,
     handleSubmit,
     watch,
+    reset,
     setValue,
     setError,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = form;
 
   const currencyId = watch('currencyId');
@@ -87,40 +129,99 @@ export function SaleForm() {
   const isDop = isReportingCurrency(currency?.code);
 
   /*
-   * Precio de lista de la unidad elegida.
+   * Lo que el documento de origen ya decidio.
    *
-   * Es una REFERENCIA, no un limite: el precio de lista es sugerido y el real
-   * se pacta en la venta (asi lo modela el backend, que no valida uno contra
-   * otro). Rebajar es normal —negociacion, unidad con detalles, stock parado—
-   * pero conviene que se vea, para que sea una decision y no un descuido.
+   * La reserva manda en cliente y vehiculo; la cotizacion aporta ademas moneda
+   * y precio pactado. El deposito NO entra aqui: es un importe sin moneda en el
+   * modelo, y meterlo a ciegas en una venta en divisa seria un error de dos
+   * ordenes de magnitud. Se decide mas abajo, ya con la moneda a la vista.
    */
-  const vehicleId = watch('vehicleId');
-  const selectedVehicle = useVehicle(vehicleId || undefined).data;
-  const listPrice = selectedVehicle?.salePrice ?? null;
-  const salePrice = Number(watch('salePrice'));
-  const priceGap =
-    listPrice !== null && Number.isFinite(salePrice) && salePrice > 0
-      ? Math.round((salePrice - listPrice) * 100) / 100
-      : null;
+  const valoresDeOrigen = React.useMemo(() => {
+    if (!reservation && !quotation) return null;
+
+    return {
+      reservationId: reservation?.id ?? null,
+      quotationId: quotation?.id ?? null,
+      clientId: reservation?.clientId ?? quotation?.clientId ?? '',
+      items: [
+        {
+          vehicleId: reservation?.vehicleId ?? quotation?.vehicleId ?? '',
+          salePrice: (quotation?.quotedPrice ?? '') as number,
+        },
+      ],
+      ...(quotation
+        ? { currencyId: quotation.currencyId }
+        : {}),
+    };
+  }, [reservation, quotation]);
+
+  /*
+   * Se vuelca en cuanto llega, y otra vez si despues aparece la cotizacion que
+   * colgaba de la reserva. `isDirty` es el freno: en cuanto el usuario toca
+   * algo, deja de pisarse lo que haya escrito.
+   *
+   * El `reset` va sin `keepDefaultValues` a proposito: lo prellenado pasa a ser
+   * el nuevo punto de partida. Conservando los defaults originales, el
+   * formulario quedaria sucio desde el primer volcado y la segunda pasada —la
+   * de la cotizacion— no llegaria a ejecutarse nunca.
+   */
+  React.useEffect(() => {
+    if (!valoresDeOrigen || isDirty) return;
+    reset((actuales) => ({ ...actuales, ...valoresDeOrigen }));
+  }, [valoresDeOrigen, isDirty, reset]);
+
+  /*
+   * El deposito solo se puede proponer como pago inicial si la venta va en la
+   * misma moneda en que se guardo, que es la de reporte: `reservations` no
+   * tiene columna de moneda. En divisa se avisa y se deja el importe vacio para
+   * que lo ponga una persona, no un `??`.
+   */
+  const deposito = reservation?.depositAmount ?? 0;
+  const hayDeposito = deposito > 0;
+  const depositoAplicable = hayDeposito && isDop;
+  const depositoEnOtraMoneda = hayDeposito && Boolean(currency) && !isDop;
+
+  /*
+   * La unidad que fija el documento de origen no se puede quitar de la venta:
+   * sin ella, la reserva o la cotizacion no quedarian convertidas.
+   */
+  const unidadDeOrigen = reservation?.vehicleId ?? quotation?.vehicleId ?? null;
+  const rate = Number(watch('exchangeRate'));
 
   // Una venta en pesos lleva tasa 1 (§7 de API.md).
   React.useEffect(() => {
     if (isDop) setValue('exchangeRate', 1);
   }, [isDop, setValue]);
 
+  /*
+   * Con deposito en la misma moneda, la casilla se marca sola: es lo que se
+   * quiere el 100 % de las veces y era justo el paso que se olvidaba, dejando
+   * el dinero del cliente fuera del estado de cuenta de su propia venta.
+   */
+  const depositoPropuesto = React.useRef(false);
+  React.useEffect(() => {
+    if (!depositoAplicable || depositoPropuesto.current) return;
+    depositoPropuesto.current = true;
+    setWithInitialPayment(true);
+  }, [depositoAplicable]);
+
   // El bloque de pago inicial solo viaja si el usuario lo activa.
   React.useEffect(() => {
-    if (withInitialPayment) {
-      setValue('initialPayment', {
-        paymentMethodId: '',
-        amount: '' as unknown as number,
-        paymentDate: todayCivil(),
-        referenceNumber: null,
-      });
-    } else {
+    if (!withInitialPayment) {
       setValue('initialPayment', null);
+      return;
     }
-  }, [withInitialPayment, setValue]);
+
+    setValue('initialPayment', {
+      paymentMethodId: '',
+      // El metodo de pago del deposito no se guarda en la reserva, asi que ese
+      // dato sigue siendo del usuario; el importe y el concepto no.
+      amount: depositoAplicable ? deposito : ('' as unknown as number),
+      paymentDate: todayCivil(),
+      referenceNumber:
+        depositoAplicable && reservation ? `Deposito ${reservation.reservationNumber}` : null,
+    });
+  }, [withInitialPayment, depositoAplicable, deposito, reservation, setValue]);
 
   const onSubmit = handleSubmit(async (values) => {
     try {
@@ -132,7 +233,46 @@ export function SaleForm() {
   });
 
   return (
+    <FormProvider {...form}>
     <form onSubmit={onSubmit} className="flex flex-col gap-6" noValidate>
+      {/*
+        Se dice en voz alta que el enlace se pierde. Callarlo dejaria una venta
+        sin convertir su reserva —el defecto que este cambio viene a arreglar—
+        con la diferencia de que ahora nadie lo notaria.
+      */}
+      {origenIlegible && (
+        <p className="rounded-lg border border-warning/30 bg-warning/8 px-3.5 py-3 text-sm leading-relaxed">
+          No se pudo cargar el documento de origen que venia en el enlace. Puedes registrar la venta
+          igualmente, pero <strong>no quedara enlazada</strong> con su reserva o cotizacion y esta
+          seguira abierta. Si esperabas ese enlace, vuelve a la ficha del documento y entra desde su
+          boton «Registrar venta».
+        </p>
+      )}
+
+      {origenFijado && (
+        <p className="flex items-start gap-2.5 rounded-lg border border-border bg-muted/40 px-3.5 py-3 text-sm leading-relaxed">
+          <Link2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+          <span>
+            Nace de{' '}
+            {reservation && (
+              <>
+                la reserva <strong className="num font-medium">{reservation.reservationNumber}</strong>
+              </>
+            )}
+            {reservation && quotation && ' y '}
+            {quotation && (
+              <>
+                la cotizacion <strong className="num font-medium">{quotation.quotationNumber}</strong>
+              </>
+            )}
+            {reservation && quotation
+              ? ', que al guardar quedaran como convertidas.'
+              : ', que al guardar quedara como convertida.'}{' '}
+            El cliente y el vehiculo vienen de ahi y no se cambian: el servidor exige que coincidan.
+          </span>
+        </p>
+      )}
+
       <Card>
         <CardContent className="flex flex-col gap-6 pt-6">
           <FormSection title="Operacion">
@@ -145,33 +285,19 @@ export function SaleForm() {
                     id="clientId"
                     value={field.value || null}
                     onChange={field.onChange}
+                    disabled={origenFijado}
                     invalid={Boolean(errors.clientId)}
                   />
                 )}
               />
             </FormField>
 
-            <FormField
-              label="Vehiculo"
-              htmlFor="vehicleId"
-              error={errors.vehicleId}
-              required
-              hint="Solo unidades en inventario o reservadas."
-            >
-              <Controller
-                control={control}
-                name="vehicleId"
-                render={({ field }) => (
-                  <VehiclePicker
-                    id="vehicleId"
-                    value={field.value || null}
-                    onChange={field.onChange}
-                    statuses={SELLABLE_VEHICLE_STATUSES}
-                    invalid={Boolean(errors.vehicleId)}
-                  />
-                )}
-              />
-            </FormField>
+            <SaleItemsField
+              lockedVehicleId={unidadDeOrigen}
+              currencyCode={currency?.code}
+              isDop={isDop}
+              exchangeRate={Number.isFinite(rate) ? rate : 1}
+            />
 
             <FormRow columns={2}>
               <FormField label="Fecha de venta" htmlFor="saleDate" error={errors.saleDate} required>
@@ -242,61 +368,6 @@ export function SaleForm() {
               </FormField>
 
               <FormField
-                label="Precio de venta"
-                htmlFor="salePrice"
-                error={errors.salePrice}
-                required
-                hint={
-                  listPrice !== null
-                    ? `Precio de lista: ${formatMoney(listPrice, currency?.code)}`
-                    : undefined
-                }
-              >
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex gap-2">
-                    <Input
-                      {...fieldAria('salePrice', errors.salePrice)}
-                      type="number"
-                      step="0.01"
-                      min={0}
-                      placeholder="0.00"
-                      className="num"
-                      {...register('salePrice')}
-                    />
-                    {listPrice !== null && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setValue('salePrice', listPrice, { shouldValidate: true })}
-                      >
-                        Usar lista
-                      </Button>
-                    )}
-                  </div>
-
-                  {/* La desviacion se muestra, no se bloquea. */}
-                  {priceGap !== null && Math.abs(priceGap) >= 0.01 && (
-                    <p
-                      className={cn(
-                        'text-xs leading-relaxed',
-                        priceGap < 0 ? 'text-warning' : 'text-success',
-                      )}
-                    >
-                      {priceGap < 0 ? 'Por debajo del precio de lista: ' : 'Por encima del precio de lista: '}
-                      <span className="num font-medium">
-                        {formatMoney(Math.abs(priceGap), currency?.code)}
-                      </span>
-                      {listPrice !== null && listPrice > 0 && (
-                        <>
-                          {' '}({formatPercentage(Math.abs((priceGap / listPrice) * 100))})
-                        </>
-                      )}
-                    </p>
-                  )}
-                </div>
-              </FormField>
-
-              <FormField
                 label="Tasa de cambio"
                 htmlFor="exchangeRate"
                 error={errors.exchangeRate}
@@ -317,8 +388,31 @@ export function SaleForm() {
 
           <FormSection
             title="Pago inicial"
-            description="Opcional. Sirve para registrar de una vez el deposito que el cliente dejo en la reserva."
+            description={
+              hayDeposito
+                ? 'El deposito de la reserva es dinero ya cobrado: si no entra aqui, la venta nace debiendo de mas.'
+                : 'Opcional. Sirve para registrar de una vez un abono entregado al cerrar la venta.'
+            }
           >
+            {/*
+              El deposito no lleva moneda en el modelo: `reservations` guarda un
+              importe pelado, que por convencion esta en la moneda de reporte.
+              Proponerlo en una venta en divisa lo multiplicaria por la tasa sin
+              que nadie se diera cuenta, asi que ahi se avisa y se deja en manos
+              de una persona.
+            */}
+            {depositoEnOtraMoneda && (
+              <p className="rounded-lg border border-warning/30 bg-warning/8 px-3.5 py-3 text-[13px] leading-relaxed">
+                La reserva tiene un deposito de{' '}
+                <strong className="num font-semibold">
+                  {formatMoney(deposito, REPORTING_CURRENCY)}
+                </strong>{' '}
+                y esta venta va en <strong>{currency?.code}</strong>. El deposito se guarda sin
+                moneda, asi que no se rellena solo: convierte el importe a {currency?.code} y
+                escribelo a mano.
+              </p>
+            )}
+
             <div className="flex items-center gap-2.5">
               <Checkbox
                 id="withInitialPayment"
@@ -326,7 +420,9 @@ export function SaleForm() {
                 onCheckedChange={(checked) => setWithInitialPayment(checked === true)}
               />
               <Label htmlFor="withInitialPayment" className="font-normal">
-                Registrar un pago inicial junto con la venta
+                {depositoAplicable
+                  ? `Registrar el deposito de ${formatMoney(deposito, REPORTING_CURRENCY)} como pago inicial`
+                  : 'Registrar un pago inicial junto con la venta'}
               </Label>
             </div>
 
@@ -411,5 +507,17 @@ export function SaleForm() {
         </Button>
       </div>
     </form>
+    </FormProvider>
   );
 }
+
+/**
+ * Aviso al vender una unidad que otro cliente tiene reservada.
+ *
+ * Va aparte para que la consulta solo se dispare cuando el caso se da: montado
+ * siempre, listaria reservas en cada alta de venta sin motivo.
+ *
+ * No bloquea. Vender por encima de una reserva vencida o de un cliente que
+ * desistio es una decision legitima del vendedor; lo que no puede pasar es que
+ * la tome sin saberlo.
+ */

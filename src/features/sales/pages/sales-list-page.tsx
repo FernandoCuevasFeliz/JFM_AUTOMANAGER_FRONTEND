@@ -15,7 +15,7 @@ import { formatMoney } from '@/lib/money';
 import { SALE_STATUSES, SALE_STATUS_META } from '@/lib/status';
 import { useListParams } from '@/lib/use-list-params';
 import { useSales } from '../hooks';
-import type { Sale, SaleStatus } from '../types';
+import { activeItems, saleVehicleLabel, type Sale, type SaleStatus } from '../types';
 
 interface SaleFilters {
   search: string;
@@ -60,17 +60,30 @@ export function SalesListPage() {
       },
       {
         id: 'vehicle',
-        header: 'Vehiculo',
-        cell: ({ row }) => (
-          <div className="flex flex-col">
-            <span>
-              {row.original.vehicleBrandName} {row.original.vehicleModelName}
-            </span>
-            <span className="font-mono text-xs text-muted-foreground">
-              {row.original.vehicleChassisNumber}
-            </span>
-          </div>
-        ),
+        header: 'Vehiculos',
+        cell: ({ row }) => {
+          /*
+           * Una venta puede llevar varias unidades, asi que no hay "un" chasis
+           * que mostrar. Con una se dice cual; con varias se cuenta y se
+           * enumeran los chasis debajo, que es por donde se busca.
+           */
+          const vigentes = activeItems(row.original);
+          const devueltas = row.original.items.length - vigentes.length;
+
+          return (
+            <div className="flex min-w-0 flex-col">
+              <span className="truncate">{saleVehicleLabel(row.original)}</span>
+              <span className="num truncate text-xs text-muted-foreground">
+                {vigentes.map((item) => item.vehicleChassisNumber).join(' · ') || '—'}
+              </span>
+              {devueltas > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  {devueltas} devuelta(s)
+                </span>
+              )}
+            </div>
+          );
+        },
       },
       {
         id: 'salePrice',

@@ -81,6 +81,25 @@ export function ReceivablePanel() {
         ),
       },
       {
+        id: 'vehicles',
+        header: 'Unidades',
+        cell: ({ row }) => {
+          const { activeItems, returnedItems, chassisNumbers } = row.original;
+
+          return (
+            <div className="flex min-w-0 flex-col">
+              <span className="text-sm">
+                {activeItems} vigente{activeItems === 1 ? '' : 's'}
+                {returnedItems > 0 && ` · ${returnedItems} devuelta(s)`}
+              </span>
+              <span className="num truncate text-xs text-muted-foreground">
+                {chassisNumbers.join(' · ') || '—'}
+              </span>
+            </div>
+          );
+        },
+      },
+      {
         id: 'salesperson',
         header: 'Vendedor',
         cell: ({ row }) => (
@@ -97,6 +116,15 @@ export function ReceivablePanel() {
           return (
             <div className="flex flex-col text-right">
               <span className="num font-medium">{formatMoney(pendingBalance, currencyCode)}</span>
+              {/*
+                Un reembolso deshace un cobro, asi que SUMA al saldo: ese dinero
+                vuelve a estar pendiente sobre lo que quede vendido.
+              */}
+              {row.original.totalRefunded > 0 && (
+                <span className="num text-xs text-warning">
+                  incl. {formatMoney(row.original.totalRefunded, currencyCode)} reembolsado
+                </span>
+              )}
               {/* En otra divisa se muestra el equivalente: es lo unico sumable. */}
               {otraMoneda && (
                 <span className="num text-xs text-muted-foreground">

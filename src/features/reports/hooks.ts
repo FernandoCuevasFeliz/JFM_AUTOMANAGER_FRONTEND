@@ -69,6 +69,17 @@ export function useSalesBySalesperson(params: SalesBySalespersonParams = {}) {
   });
 }
 
+export function useMonthlyReturnsReport(params: MonthRangeParams = {}) {
+  const { can } = useAuth();
+
+  return useQuery({
+    queryKey: queryKeys.reportReturnsMonthly(params),
+    queryFn: () => reportsApi.monthlyReturns(params),
+    enabled: can('reports:read'),
+    staleTime: REPORT_STALE_TIME,
+  });
+}
+
 export function useMonthlyExpensesReport(params: MonthlyExpensesParams = {}) {
   const { can } = useAuth();
 

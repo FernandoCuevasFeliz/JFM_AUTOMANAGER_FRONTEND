@@ -4,7 +4,15 @@ import { useAuth } from '@/features/auth/use-auth';
 import { handleApiError } from '@/lib/errors';
 import { queryKeys } from '@/lib/query-client';
 import { salesApi } from './api';
-import type { CreateSaleValues, PaymentValues, UpdateSaleValues } from './schemas';
+import type {
+  CreateSaleValues,
+  PaymentValues,
+  RefundValues,
+  ReturnSaleItemValues,
+  SaleItemValues,
+  UpdateSaleItemValues,
+  UpdateSaleValues,
+} from './schemas';
 import type { SaleListParams, SalesSummaryParams } from './types';
 
 export function useSales(params: SaleListParams) {
@@ -73,8 +81,9 @@ export function useCreateSale() {
   return useMutation({
     mutationFn: (input: CreateSaleValues) => salesApi.create(input),
     onSuccess: (sale) => {
+      const unidades = sale.items?.length ?? 0;
       toast.success('Venta registrada', {
-        description: `${sale.saleNumber} · el vehiculo paso a vendido.`,
+        description: `${sale.saleNumber} · ${unidades === 1 ? 'el vehiculo paso' : `${unidades} vehiculos pasaron`} a vendido.`,
       });
       invalidate(sale.id);
     },
@@ -113,7 +122,9 @@ export function useCancelSale(id: string) {
   return useMutation({
     mutationFn: () => salesApi.cancel(id),
     onSuccess: () => {
-      toast.success('Venta cancelada', { description: 'El vehiculo volvio a inventario.' });
+      toast.success('Venta cancelada', {
+        description: 'Todos los vehiculos volvieron a inventario.',
+      });
       invalidate(id);
     },
     onError: (error) => handleApiError(error, { title: 'No se pudo cancelar la venta' }),
@@ -148,5 +159,88 @@ export function useRegisterPayment(id: string) {
       });
       invalidate(id);
     },
+  });
+}
+
+/*
+ * Vehiculos de la venta.
+ *
+ * Los cuatro endpoints devuelven la venta completa, asi que basta con
+ * invalidar: el importe de la cabecera es derivado y solo el servidor sabe
+ * cuanto suma tras el cambio.
+ */
+
+export function useAddSaleItem(saleId: string) {
+  const invalidate = useInvalidateSales();
+
+  return useMutation({
+    mutationFn: (input: SaleItemValues) => salesApi.addItem(saleId, input),
+    onSuccess: () => {
+      toast.success('Vehiculo agregado a la venta');
+      invalidate(saleId);
+    },
+    onError: (error) => handleApiError(error, { title: 'No se pudo agregar el vehiculo' }),
+  });
+}
+
+export function useUpdateSaleItem(saleId: string) {
+  const invalidate = useInvalidateSales();
+
+  return useMutation({
+    mutationFn: ({ itemId, ...input }: UpdateSaleItemValues & { itemId: string }) =>
+      salesApi.updateItem(saleId, itemId, input),
+    onSuccess: () => {
+      toast.success('Precio actualizado');
+      invalidate(saleId);
+    },
+    onError: (error) => handleApiError(error, { title: 'No se pudo cambiar el precio' }),
+  });
+}
+
+/** Quitar borra la linea porque nunca debio existir. No es una devolucion. */
+export function useRemoveSaleItem(saleId: string) {
+  const invalidate = useInvalidateSales();
+
+  return useMutation({
+    mutationFn: (itemId: string) => salesApi.removeItem(saleId, itemId),
+    onSuccess: () => {
+      toast.success('Vehiculo quitado de la venta', {
+        description: 'La unidad vuelve a estar disponible.',
+      });
+      invalidate(saleId);
+    },
+    onError: (error) => handleApiError(error, { title: 'No se pudo quitar el vehiculo' }),
+  });
+}
+
+/** Devolver conserva la linea con su motivo y admite una venta ya completada. */
+export function useReturnSaleItem(saleId: string) {
+  const invalidate = useInvalidateSales();
+
+  return useMutation({
+    mutationFn: ({ itemId, ...input }: ReturnSaleItemValues & { itemId: string }) =>
+      salesApi.returnItem(saleId, itemId, input),
+    onSuccess: (sale) => {
+      toast.success('Vehiculo devuelto', {
+        description: `El total de la venta baja a ${sale.salePrice}.`,
+      });
+      invalidate(saleId);
+    },
+    onError: (error) => handleApiError(error, { title: 'No se pudo devolver el vehiculo' }),
+  });
+}
+
+export function useRegisterRefund(saleId: string) {
+  const invalidate = useInvalidateSales();
+
+  return useMutation({
+    mutationFn: (input: RefundValues) => salesApi.registerRefund(saleId, input),
+    onSuccess: (result) => {
+      toast.success('Reembolso registrado', {
+        description: `Neto retenido: ${result.netPaid}.`,
+      });
+      invalidate(saleId);
+    },
+    onError: (error) => handleApiError(error, { title: 'No se pudo registrar el reembolso' }),
   });
 }

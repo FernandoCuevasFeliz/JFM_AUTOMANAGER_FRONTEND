@@ -1,4 +1,4 @@
-import { Pencil, XCircle } from 'lucide-react';
+import { Clock, Pencil, XCircle } from 'lucide-react';
 import * as React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/confirm-dialog';
@@ -16,7 +16,11 @@ import {
   isReservationEditable,
 } from '@/lib/status';
 import { ReservationFormDialog } from '../components/reservation-form-dialog';
-import { useCancelReservation, useReservation } from '../hooks';
+import {
+  useCancelReservation,
+  useExpireOverdueReservations,
+  useReservation,
+} from '../hooks';
 
 export function ReservationDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +29,7 @@ export function ReservationDetailPage() {
 
   const reservationQuery = useReservation(id);
   const cancelReservation = useCancelReservation();
+  const expireOverdue = useExpireOverdueReservations();
 
   const [editOpen, setEditOpen] = React.useState(false);
   const [cancelOpen, setCancelOpen] = React.useState(false);
@@ -81,6 +86,35 @@ export function ReservationDetailPage() {
           </span>
         )}
       </div>
+
+      {/*
+        Pasada la fecha, la reserva sigue diciendo «Activa» y el vehiculo sigue
+        `reserved`. No es un fallo de esta pantalla: el vencimiento no es
+        automatico, lo aplica un barrido —`POST /reservations/expire-overdue`—
+        que hasta ahora solo se podia lanzar desde el listado, sin que nada lo
+        explicara aqui. Quien mira esta ficha es justo quien necesita saberlo.
+      */}
+      {activa && vencida && (
+        <div className="flex flex-col gap-3 rounded-lg border border-warning/30 bg-warning/8 px-3.5 py-3 text-[13px] leading-relaxed sm:flex-row sm:items-center sm:justify-between">
+          <span>
+            El plazo se cumplio pero la reserva sigue activa y la unidad continua bloqueada: el
+            vencimiento no corre solo. Al aplicarlo, esta y todas las demas reservas caducadas
+            pasan a vencidas y sus vehiculos vuelven a inventario.
+          </span>
+          {can('reservations:write') && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0"
+              loading={expireOverdue.isPending}
+              onClick={() => expireOverdue.mutate()}
+            >
+              <Clock />
+              Aplicar vencimientos
+            </Button>
+          )}
+        </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <DetailCard title="Reserva" className="lg:col-span-2">
@@ -146,12 +180,19 @@ export function ReservationDetailPage() {
             <p className="leading-relaxed text-muted-foreground">
               Al registrar la venta desde esta reserva, el sistema la marca como{' '}
               <strong className="font-medium text-foreground">convertida</strong> y el deposito se
-              puede registrar como pago inicial.
+              propone como pago inicial de la venta.
             </p>
 
+            {/*
+              El enlace lleva la reserva consigo. Sin ella el formulario no
+              tiene forma de saber de donde viene —una misma unidad puede
+              acumular varias reservas—, y el backend solo cierra la que le
+              nombren: hasta ahora esto apuntaba a `/sales/new` a secas y
+              ninguna reserva llegaba a convertirse.
+            */}
             {activa && can('sales:write') && (
               <Button variant="outline" size="sm" asChild className="w-fit">
-                <Link to="/sales/new">Registrar venta</Link>
+                <Link to={`/sales/new?reservationId=${reservation.id}`}>Registrar venta</Link>
               </Button>
             )}
           </div>

@@ -11,7 +11,8 @@ import {
   PrintTh,
   PrintTotal,
 } from '@/components/print-sheet';
-import { COMPANY, TAX_INCLUDED, TAX_LABEL, TAX_RATE } from '@/features/billing/company';
+import { COMPANY } from '@/features/billing/company';
+import { splitTax } from '@/features/billing/tax';
 import type { Client } from '@/features/clients/types';
 import { clientDisplayName } from '@/features/clients/types';
 import type { Vehicle } from '@/features/vehicles/types';
@@ -36,12 +37,38 @@ export function QuotationDocument({
   client?: Client | null;
   vehicle?: Vehicle | null;
 }) {
-  const vencida = isPastCivil(quotation.validUntil) || quotation.status === 'expired';
+  /*
+   * La vigencia solo importa mientras la cotizacion sigue en juego.
+   *
+   * Antes bastaba con que la fecha hubiera pasado, asi que una cotizacion
+   * convertida en venta hace meses, reimpresa hoy, salia sellada como
+   * «vencida» —cuando lo que le paso es que se cumplio—. Cada estado terminal
+   * dice lo suyo, y el que se cerro bien no lleva sello.
+   */
+  const enJuego = quotation.status === 'pending' || quotation.status === 'approved';
+  const vencida = quotation.status === 'expired' || (enJuego && isPastCivil(quotation.validUntil));
   const dias = daysUntilCivil(quotation.validUntil);
 
-  const total = Math.round(quotation.quotedPrice * 100) / 100;
-  const subtotal = TAX_RATE > 0 && TAX_INCLUDED ? Math.round((total / (1 + TAX_RATE)) * 100) / 100 : total;
-  const impuesto = Math.round((total - subtotal) * 100) / 100;
+  const sello =
+    quotation.status === 'converted'
+      ? null
+      : quotation.status === 'rejected'
+        ? 'Cotizacion rechazada'
+        : vencida
+          ? 'Cotizacion vencida'
+          : null;
+
+  /*
+   * El mismo desglose que la factura, literalmente.
+   *
+   * Aqui habia una copia a mano que solo contemplaba el impuesto incluido en el
+   * precio. Con la configuracion contraria imprimia «ITBIS 0,00» y un total
+   * igual al precio pelado, mientras que la factura de esa venta sumaba el 18 %
+   * por encima: el cliente veia una cifra en la cotizacion y otra distinta en
+   * la factura.
+   */
+  const impuestos = splitTax(quotation.quotedPrice);
+  const { subtotal, taxAmount: impuesto, total } = impuestos;
 
   const detalles = [
     `Chasis ${quotation.vehicleChassisNumber}`,
@@ -64,7 +91,7 @@ export function QuotationDocument({
         <PrintMeta label="Moneda" value={quotation.currencyCode} mono />
       </PrintHeader>
 
-      {vencida && <PrintStamp tone="muted">Cotizacion vencida</PrintStamp>}
+      {sello && <PrintStamp tone="muted">{sello}</PrintStamp>}
 
       <section className="mt-6 grid grid-cols-2 gap-6">
         <PrintBlock title="Cotizado a">
@@ -135,9 +162,11 @@ export function QuotationDocument({
         <table className="w-[72mm] shrink-0 text-[9.5pt]">
           <tbody>
             <PrintTotal label="Subtotal" value={formatMoney(subtotal, quotation.currencyCode)} />
-            {TAX_RATE > 0 && (
+            {impuestos.taxRate > 0 && (
               <PrintTotal
-                label={`${TAX_LABEL} (${formatPercentage(TAX_RATE * 100)})${TAX_INCLUDED ? ' incl.' : ''}`}
+                label={`${impuestos.taxLabel} (${formatPercentage(impuestos.taxRate * 100)})${
+                  impuestos.taxIncluded ? ' incl.' : ''
+                }`}
                 value={formatMoney(impuesto, quotation.currencyCode)}
               />
             )}

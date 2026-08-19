@@ -59,7 +59,14 @@ export function InvoiceDetailPage() {
   // Enriquecen el papel; si faltan permisos, el documento sale con menos detalle.
   const saleQuery = useSale(invoice?.saleId);
   const clientQuery = useClient(saleQuery.data?.clientId);
-  const vehicleQuery = useVehicle(saleQuery.data?.vehicleId);
+  /*
+   * La ficha del vehiculo solo aporta detalle (color, motor, km) y una venta
+   * puede llevar varios. Se pide la de la primera unidad: con una sola —el caso
+   * habitual— el papel queda igual de completo que antes, y con varias el
+   * detalle extra se omite en vez de multiplicar consultas por una linea de
+   * texto.
+   */
+  const vehicleQuery = useVehicle(saleQuery.data?.items?.[0]?.vehicleId);
 
   const issueInvoice = useIssueInvoice(id ?? '');
   const rejectInvoice = useRejectInvoice(id ?? '');
@@ -315,6 +322,15 @@ export function InvoiceDetailPage() {
         onOpenChange={setNoteOpen}
         currencyCode={invoice.currencyCode}
         available={disponible}
+        /*
+         * Atar la nota a una unidad es lo que despues permite devolver ese
+         * vehiculo: un vehiculo facturado no se devuelve sin acreditarlo antes.
+         */
+        items={(saleQuery.data?.items ?? []).map((item) => ({
+          id: item.id,
+          label: `${item.vehicleChassisNumber} · ${item.vehicleBrandName} ${item.vehicleModelName}`,
+          salePrice: item.salePrice,
+        }))}
         loading={createNote.isPending}
         onSubmit={(values) => createNote.mutateAsync(values)}
       />

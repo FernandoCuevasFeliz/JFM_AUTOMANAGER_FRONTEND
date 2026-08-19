@@ -10,6 +10,7 @@ import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/use-auth';
 import { useClient } from '@/features/clients/hooks';
+import { ReservationFormDialog } from '@/features/reservations/components/reservation-form-dialog';
 import { useVehicle } from '@/features/vehicles/hooks';
 import { daysUntilCivil, formatCivilDate, formatDateTime, isPastCivil } from '@/lib/dates';
 import { formatMoney } from '@/lib/money';
@@ -41,6 +42,7 @@ export function QuotationDetailPage() {
   const changeStatus = useChangeQuotationStatus(id ?? '');
 
   const [pendingStatus, setPendingStatus] = React.useState<QuotationStatus | null>(null);
+  const [reservationOpen, setReservationOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (!quotation) return;
@@ -174,20 +176,40 @@ export function QuotationDetailPage() {
                 sistema en ese momento; no se asigna a mano.
               </p>
 
-              {quotation.status === 'approved' && (
-                <div className="flex flex-col gap-2">
-                  {can('reservations:write') && (
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to="/reservations">Crear reserva</Link>
-                    </Button>
-                  )}
-                  {can('sales:write') && (
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to="/sales/new">Registrar venta</Link>
-                    </Button>
-                  )}
-                </div>
-              )}
+              {/*
+                Los dos caminos arrastran la cotizacion. El de la reserva abre
+                aqui mismo el dialogo con `fromQuotation` —que ya existia y no
+                lo usaba nadie: el boton mandaba al listado— y el de la venta la
+                pasa por la URL. Sin ese dato el backend no marca `converted`.
+
+                Y se mira la FECHA, no solo el estado. `isConvertible` exige
+                vigencia ademas de aprobacion, asi que una aprobada cuyo plazo
+                paso terminaba en un error del servidor: el estado sigue
+                diciendo «Aprobada» hasta que corre el barrido de vencimientos.
+              */}
+              {quotation.status === 'approved' &&
+                (vencida ? (
+                  <p className="rounded-lg border border-warning/30 bg-warning/8 px-3.5 py-3 text-[13px] leading-relaxed">
+                    Esta cotizacion esta aprobada pero su vigencia termino el{' '}
+                    <span className="num">{formatCivilDate(quotation.validUntil)}</span>, asi que ya
+                    no se puede convertir en reserva ni en venta. Amplia la vigencia desde{' '}
+                    <strong className="font-medium">Editar</strong> en el listado, o emite una
+                    cotizacion nueva.
+                  </p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {can('reservations:write') && (
+                      <Button variant="outline" size="sm" onClick={() => setReservationOpen(true)}>
+                        Crear reserva
+                      </Button>
+                    )}
+                    {can('sales:write') && (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/sales/new?quotationId=${quotation.id}`}>Registrar venta</Link>
+                      </Button>
+                    )}
+                  </div>
+                ))}
             </div>
           </DetailCard>
         </div>
@@ -218,6 +240,17 @@ export function QuotationDetailPage() {
         onConfirm={() => {
           if (pendingStatus) changeStatus.mutate(pendingStatus as never);
           setPendingStatus(null);
+        }}
+      />
+
+      <ReservationFormDialog
+        open={reservationOpen}
+        onOpenChange={setReservationOpen}
+        fromQuotation={{
+          id: quotation.id,
+          clientId: quotation.clientId,
+          vehicleId: quotation.vehicleId,
+          number: quotation.quotationNumber,
         }}
       />
     </div>

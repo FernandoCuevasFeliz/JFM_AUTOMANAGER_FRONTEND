@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/page-header';
 import { EmptyState, NoResultsState } from '@/components/states';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -117,8 +118,18 @@ export function QuotationsListPage() {
         id: 'validUntil',
         header: 'Vigencia',
         cell: ({ row }) => {
-          const overdue =
-            isPastCivil(row.original.validUntil) && row.original.status === 'pending';
+          /*
+           * Tambien las aprobadas.
+           *
+           * Antes solo se marcaban las pendientes, y la aprobada-y-vencida es
+           * justo la peligrosa: es la unica que alguien va a intentar convertir
+           * en reserva o venta, y el backend la rechaza por fecha aunque su
+           * estado siga diciendo «Aprobada». La ficha de detalle ya contaba las
+           * dos; el listado se habia quedado atras.
+           */
+          const vigenciaImporta =
+            row.original.status === 'pending' || row.original.status === 'approved';
+          const overdue = vigenciaImporta && isPastCivil(row.original.validUntil);
 
           return (
             <span className={overdue ? 'tabular text-danger' : 'tabular'}>
@@ -258,6 +269,27 @@ export function QuotationsListPage() {
             value: status,
             label: QUOTATION_STATUS_META[status].label,
           }))}
+        />
+
+        {/*
+          El rango filtra por VIGENCIA, no por fecha de emision (asi lo aplica
+          el backend). Los dos campos ya existian en `QuotationFilters` y la API
+          ya los aceptaba: lo unico que faltaba era la interfaz, asi que el
+          filtro estaba escrito de punta a punta y no se podia usar.
+        */}
+        <Input
+          type="date"
+          aria-label="Vigencia desde"
+          value={filters.dateFrom ?? ''}
+          onChange={(event) => setFilter('dateFrom', event.target.value || undefined)}
+          className="w-full sm:w-40"
+        />
+        <Input
+          type="date"
+          aria-label="Vigencia hasta"
+          value={filters.dateTo ?? ''}
+          onChange={(event) => setFilter('dateTo', event.target.value || undefined)}
+          className="w-full sm:w-40"
         />
       </FilterBar>
 

@@ -35,6 +35,8 @@ export const INVOICE_NCF_TYPES: readonly NcfType[] = ['E31', 'E32', 'E44', 'E45'
 export interface CreditNote {
   readonly id: string;
   readonly invoiceId: string;
+  /** Unidad devuelta que la motiva; `null` en una nota general. */
+  readonly saleItemId: string | null;
   readonly ncfNumber: string | null;
   readonly reason: string;
   readonly amount: number;
@@ -81,13 +83,19 @@ export interface InvoiceRecord {
  */
 export interface Invoice extends InvoiceRecord {
   readonly saleNumber: string;
+  /**
+   * Importe **facturado**: la suma de *todas* las lineas de la venta, devueltas
+   * incluidas. No baja cuando se devuelve un vehiculo — un e-CF emitido no
+   * cambia de importe; lo corrige la nota de credito.
+   */
   readonly salePrice: number;
   readonly currencyCode: string;
   readonly saleDate: string;
   readonly saleStatus: string;
   readonly clientName: string;
   readonly clientDocumentNumber: string;
-  readonly vehicleChassisNumber: string;
+  /** Todos los vehiculos que la factura ampara: una venta puede llevar varios. */
+  readonly vehicleChassisNumbers: string[];
   readonly createdByName: string;
 
   readonly creditNotes: CreditNote[];
