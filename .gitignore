@@ -1,0 +1,18 @@
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+.vite
+.claude/
+.agents/
+.agents/skills/ui-ux-pro-max/
+
+# Credenciales de la demo: el repositorio es publico y el despliegue esta en
+# linea, asi que subirlas daria acceso al panel a cualquiera. Si prefieres
+# publicarlas a proposito, borra esta linea.
+USUARIOS-DEMO.md
