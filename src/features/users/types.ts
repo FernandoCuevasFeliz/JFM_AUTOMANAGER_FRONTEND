@@ -24,6 +24,21 @@ export interface Role {
   readonly permissions: string[];
 }
 
+export interface ManagedSession {
+  readonly id: string;
+  readonly userId: string;
+  readonly userName: string;
+  readonly userEmail: string;
+  readonly userAgent: string | null;
+  readonly ipAddress: string | null;
+  readonly createdAt: string;
+  readonly expiresAt: string;
+}
+
+export interface RevokeSessionsResult {
+  readonly revoked: number;
+}
+
 export interface UserListParams extends PageQuery {
   search?: string;
   roleId?: string;

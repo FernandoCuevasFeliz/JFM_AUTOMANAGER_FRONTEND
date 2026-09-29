@@ -45,6 +45,7 @@ const ReportsPage = lazyPage(() => import('@/features/reports/pages/reports-page
 const CatalogsPage = lazyPage(() => import('@/features/catalogs/pages/catalogs-page'), 'CatalogsPage');
 const UsersListPage = lazyPage(() => import('@/features/users/pages/users-list-page'), 'UsersListPage');
 const UserDetailPage = lazyPage(() => import('@/features/users/pages/user-detail-page'), 'UserDetailPage');
+const RolesPage = lazyPage(() => import('@/features/users/pages/roles-page'), 'RolesPage');
 const ChangePasswordPage = lazyPage(() => import('@/features/auth/pages/change-password-page'), 'ChangePasswordPage');
 const SessionsPage = lazyPage(() => import('@/features/auth/pages/sessions-page'), 'SessionsPage');
 
@@ -182,6 +183,8 @@ export const router = createBrowserRouter([
             children: [
               { path: 'users', element: <UsersListPage /> },
               { path: 'users/:id', element: <UserDetailPage /> },
+              { path: 'roles', element: <RolesPage /> },
+              { path: 'sessions', element: <SessionsPage /> },
             ],
           },
 

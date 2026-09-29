@@ -1,7 +1,7 @@
 import { api } from '@/lib/api-client';
 import type { QueryParams } from '@/lib/api-types';
-import type { CreateUserValues, UpdateUserValues } from './schemas';
-import type { Role, User, UserListParams } from './types';
+import type { CreateRoleValues, CreateUserValues, UpdateUserValues } from './schemas';
+import type { ManagedSession, RevokeSessionsResult, Role, User, UserListParams } from './types';
 
 export const usersApi = {
   list(params: UserListParams) {
@@ -14,6 +14,26 @@ export const usersApi = {
 
   roles() {
     return api.get<Role[]>('/users/roles');
+  },
+
+  permissions() {
+    return api.get<string[]>('/users/permissions');
+  },
+
+  createRole(input: CreateRoleValues) {
+    return api.post<Role>('/users/roles', input);
+  },
+
+  sessions() {
+    return api.get<ManagedSession[]>('/users/sessions');
+  },
+
+  revokeSession(sessionId: string) {
+    return api.delete(`/users/sessions/${sessionId}`);
+  },
+
+  revokeUserSessions(userId: string) {
+    return api.post<RevokeSessionsResult>(`/users/${userId}/logout-all`);
   },
 
   create(input: CreateUserValues) {

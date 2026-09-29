@@ -64,3 +64,17 @@ export const USER_FORM_FIELDS = [
   'phone',
   'isActive',
 ] as const;
+
+export const createRoleSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, 'El nombre debe tener al menos 2 caracteres')
+    .max(50, 'El nombre no puede superar los 50 caracteres')
+    .regex(/^[a-zA-Z0-9_-]+$/, 'Usa solo letras, numeros, guion y guion bajo'),
+  description: nullableText(255),
+  permissions: z.array(z.string()).min(1, 'Selecciona al menos un permiso'),
+});
+
+export type CreateRoleValues = z.infer<typeof createRoleSchema>;
+export const ROLE_FORM_FIELDS = ['name', 'description', 'permissions'] as const;

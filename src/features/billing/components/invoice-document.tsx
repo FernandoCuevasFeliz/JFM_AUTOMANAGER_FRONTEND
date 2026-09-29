@@ -182,12 +182,12 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceView }) {
             )}
 
             {totals.paid !== null && (
-              <PrintTotal label="Pagado" value={formatMoney(totals.paid, invoice.currencyCode)} />
+              <PrintTotal label="Pagos aplicados" value={`− ${formatMoney(totals.paid, invoice.currencyCode)}`} />
             )}
             {totals.balance !== null && (
-              <tr className={cn('border-t border-slate-300', totals.balance > 0.004 && 'text-[#DC2626]')}>
-                <td className="py-1.5 font-semibold">Saldo pendiente</td>
-                <td className="whitespace-nowrap py-1.5 text-right font-mono font-bold tabular-nums">
+              <tr className={cn('border-t-2 border-slate-900', totals.balance > 0.004 && 'text-[#DC2626]')}>
+                <td className="py-2 text-[10pt] font-bold uppercase tracking-wide">Saldo por pagar</td>
+                <td className="whitespace-nowrap py-2 text-right font-mono text-[12pt] font-bold tabular-nums">
                   {formatMoney(totals.balance, invoice.currencyCode)}
                 </td>
               </tr>
@@ -275,4 +275,3 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceView }) {
     </PrintSheet>
   );
 }
-

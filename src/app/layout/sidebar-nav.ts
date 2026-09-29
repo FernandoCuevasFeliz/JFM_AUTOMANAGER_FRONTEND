@@ -11,6 +11,8 @@ import {
   Truck,
   Users,
   UserCog,
+  ShieldCheck,
+  MonitorSmartphone,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -78,6 +80,8 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Catalogos', to: '/catalogs', icon: Tags, permission: 'catalogs:read' },
       { label: 'Usuarios', to: '/users', icon: UserCog, permission: 'users:read' },
+      { label: 'Roles', to: '/roles', icon: ShieldCheck, permission: 'users:read' },
+      { label: 'Sesiones', to: '/sessions', icon: MonitorSmartphone, permission: 'users:read' },
     ],
   },
 ];

@@ -238,3 +238,14 @@ export function canReturnItem(sale: Sale, item: SaleItem): boolean {
 export function refundableAmount(sale: Sale): number {
   return Math.max(Math.round((sale.totalPaid - sale.totalRefunded) * 100) / 100, 0);
 }
+
+/** Totales recalculados desde los movimientos visibles en el comprobante. */
+export function saleAccountTotals(sale: Pick<Sale, 'salePrice' | 'payments' | 'refunds'>) {
+  const round = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
+  const paid = round(sale.payments.reduce((total, payment) => total + payment.amount, 0));
+  const refunded = round(sale.refunds.reduce((total, refund) => total + refund.amount, 0));
+  const netPaid = round(paid - refunded);
+  const balance = Math.max(round(sale.salePrice - netPaid), 0);
+
+  return { paid, refunded, netPaid, balance };
+}

@@ -4,7 +4,7 @@ import { useAuth } from '@/features/auth/use-auth';
 import { handleApiError } from '@/lib/errors';
 import { queryKeys } from '@/lib/query-client';
 import { usersApi } from './api';
-import type { CreateUserValues, UpdateUserValues } from './schemas';
+import type { CreateRoleValues, CreateUserValues, UpdateUserValues } from './schemas';
 import type { UserListParams } from './types';
 
 export function useUsers(params: UserListParams) {
@@ -36,6 +36,60 @@ export function useRoles() {
     queryFn: () => usersApi.roles(),
     enabled: can('users:read'),
     staleTime: 10 * 60_000,
+  });
+}
+
+export function usePermissions() {
+  const { can } = useAuth();
+  return useQuery({
+    queryKey: ['users', 'permissions'],
+    queryFn: () => usersApi.permissions(),
+    enabled: can('users:read'),
+    staleTime: 10 * 60_000,
+  });
+}
+
+export function useCreateRole() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateRoleValues) => usersApi.createRole(input),
+    onSuccess: (role) => {
+      toast.success(`Rol ${role.name} creado`);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.roles });
+    },
+  });
+}
+
+export function useManagedSessions() {
+  const { can } = useAuth();
+  return useQuery({
+    queryKey: ['users', 'sessions'],
+    queryFn: () => usersApi.sessions(),
+    enabled: can('users:read'),
+  });
+}
+
+export function useRevokeSession() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (sessionId: string) => usersApi.revokeSession(sessionId),
+    onSuccess: () => {
+      toast.success('Sesion cerrada');
+      void queryClient.invalidateQueries({ queryKey: ['users', 'sessions'] });
+    },
+    onError: (error) => handleApiError(error, { title: 'No se pudo cerrar la sesion' }),
+  });
+}
+
+export function useRevokeUserSessions() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => usersApi.revokeUserSessions(userId),
+    onSuccess: (result) => {
+      toast.success(`${result.revoked} sesiones cerradas`);
+      void queryClient.invalidateQueries({ queryKey: ['users', 'sessions'] });
+    },
+    onError: (error) => handleApiError(error, { title: 'No se pudieron cerrar las sesiones' }),
   });
 }
 

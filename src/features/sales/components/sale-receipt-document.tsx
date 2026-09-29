@@ -16,11 +16,12 @@ import { formatCivilDate } from '@/lib/dates';
 import { formatExchangeRate, formatMoney } from '@/lib/money';
 import { moneyToWords } from '@/lib/number-to-words';
 import type { Sale } from '../types';
-import { activeItems, returnedItems } from '../types';
+import { activeItems, returnedItems, saleAccountTotals } from '../types';
 
 export function SaleReceiptDocument({ sale }: { sale: Sale }) {
   const vigentes = activeItems(sale);
   const devueltos = returnedItems(sale);
+  const account = saleAccountTotals(sale);
 
   return (
     <PrintSheet>
@@ -107,15 +108,14 @@ export function SaleReceiptDocument({ sale }: { sale: Sale }) {
         <table className="w-[72mm] shrink-0 text-[9.5pt]">
           <tbody>
             <PrintTotal label="Subtotal venta" value={formatMoney(sale.salePrice, sale.currencyCode)} />
-            <PrintTotal label="Cobrado" value={formatMoney(sale.totalPaid, sale.currencyCode)} />
-            {sale.totalRefunded > 0 && (
-              <PrintTotal label="Reembolsado" value={formatMoney(sale.totalRefunded, sale.currencyCode)} />
+            <PrintTotal label="Pagos aplicados" value={`- ${formatMoney(account.paid, sale.currencyCode)}`} />
+            {account.refunded > 0 && (
+              <PrintTotal label="Reembolsado" value={`+ ${formatMoney(account.refunded, sale.currencyCode)}`} />
             )}
-            <PrintTotal label="Saldo pendiente" value={formatMoney(sale.pendingBalance, sale.currencyCode)} />
             <tr className="border-t-2 border-slate-900">
-              <td className="py-2 text-[10pt] font-bold uppercase tracking-wide">Total</td>
+              <td className="py-2 text-[10pt] font-bold uppercase tracking-wide">Saldo por pagar</td>
               <td className="whitespace-nowrap py-2 text-right font-mono text-[12pt] font-bold tabular-nums">
-                {formatMoney(sale.salePrice, sale.currencyCode)}
+                {formatMoney(account.balance, sale.currencyCode)}
               </td>
             </tr>
           </tbody>

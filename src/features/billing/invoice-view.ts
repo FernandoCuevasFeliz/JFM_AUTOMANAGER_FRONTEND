@@ -77,6 +77,14 @@ export function buildInvoiceView(
   vehicle?: Vehicle | null,
 ): InvoiceView {
   const totals = splitTax(invoice.salePrice);
+  const paid = sale
+    ? round2(sale.payments.reduce((sum, payment) => sum + payment.amount, 0))
+    : null;
+  const refunded = sale
+    ? round2(sale.refunds.reduce((sum, refund) => sum + refund.amount, 0))
+    : null;
+  const balance =
+    paid === null || refunded === null ? null : Math.max(round2(invoice.netAmount - (paid - refunded)), 0);
 
   /*
    * Una linea del impreso por cada vehiculo de la venta.
@@ -155,8 +163,8 @@ export function buildInvoiceView(
       totalInWords: moneyToWords(totals.total, invoice.currencyCode),
       credited: invoice.creditedAmount,
       net: invoice.netAmount,
-      paid: sale?.totalPaid ?? null,
-      balance: sale?.pendingBalance ?? null,
+      paid,
+      balance,
     },
 
     payments: sale?.payments ?? [],

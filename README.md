@@ -15,14 +15,15 @@ SEO ni de render en servidor, se eligio **React + Vite** en lugar de Next.js.
 2. [Instalacion](#instalacion)
 3. [Variables de entorno](#variables-de-entorno)
 4. [Scripts](#scripts)
-5. [Stack](#stack)
-6. [Arquitectura](#arquitectura)
-7. [Autenticacion y sesion](#autenticacion-y-sesion)
-8. [Permisos en la interfaz](#permisos-en-la-interfaz)
-9. [Reglas de negocio que la UI anticipa](#reglas-de-negocio-que-la-ui-anticipa)
-10. [Manejo de errores](#manejo-de-errores)
-11. [Subida de imagenes con ImageKit](#subida-de-imagenes-con-imagekit)
-12. [Limitaciones conocidas](#limitaciones-conocidas)
+5. [Docker](#docker)
+6. [Stack](#stack)
+7. [Arquitectura](#arquitectura)
+8. [Autenticacion y sesion](#autenticacion-y-sesion)
+9. [Permisos en la interfaz](#permisos-en-la-interfaz)
+10. [Reglas de negocio que la UI anticipa](#reglas-de-negocio-que-la-ui-anticipa)
+11. [Manejo de errores](#manejo-de-errores)
+12. [Subida de imagenes con ImageKit](#subida-de-imagenes-con-imagekit)
+13. [Limitaciones conocidas](#limitaciones-conocidas)
 
 ---
 
@@ -85,6 +86,54 @@ Si las variables de ImageKit quedan vacias, la galeria de vehiculos sigue funcio
 | `npm run build` | Verifica tipos (`tsc -b`) y compila a `dist/`. |
 | `npm run preview` | Sirve `dist/` para revisar la build de produccion. |
 | `npm run typecheck` | Solo la verificacion de tipos. |
+
+---
+
+## Docker
+
+La imagen se construye en dos etapas: Node.js instala las dependencias y genera `dist/`; Nginx
+sirve los archivos estaticos en produccion. La configuracion incluye fallback a `index.html` para
+que las rutas de React Router funcionen al recargar la pagina y expone `GET /health` como chequeo
+de salud.
+
+Las variables `VITE_*` se incorporan al JavaScript durante la construccion de la imagen. Por eso,
+si cambia alguna, hay que reconstruir la imagen. No se deben usar para secretos: todo valor
+`VITE_*` es visible para el navegador.
+
+Con Docker Compose, toma los valores del archivo `.env` existente:
+
+```bash
+docker compose up --build -d
+```
+
+La aplicacion queda disponible en `http://localhost:8080`. El puerto puede cambiarse sin editar el
+archivo:
+
+```bash
+FRONTEND_PORT=8081 docker compose up --build -d
+```
+
+Tambien se puede construir y ejecutar directamente:
+
+```bash
+docker build \
+  --build-arg VITE_API_URL=http://localhost:3000/api/v1 \
+  -t jfm-automanager-frontend .
+
+docker run --rm -p 8080:80 --name jfm-automanager-frontend jfm-automanager-frontend
+```
+
+Comandos de operacion:
+
+```bash
+docker compose ps
+docker compose logs -f frontend
+docker compose down
+```
+
+> `VITE_API_URL` es utilizada por el navegador, no por el contenedor. Debe ser una URL accesible
+> desde la computadora del usuario; el nombre interno de otro servicio de Compose normalmente no
+> sirve en este valor.
 
 ---
 
