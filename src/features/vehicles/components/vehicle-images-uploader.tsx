@@ -27,6 +27,7 @@ import {
   useSetPrimaryImage,
   useVehicleImages,
 } from '../hooks';
+import { VehicleImageViewer } from './vehicle-image-viewer';
 
 /**
  * Galeria e ingreso de imagenes de un vehiculo.
@@ -85,6 +86,7 @@ export function VehicleImagesUploader({
   const [manualUrl, setManualUrl] = React.useState('');
   const [showUrlInput, setShowUrlInput] = React.useState(!IMAGEKIT_UPLOAD_ENABLED);
   const [pendingDelete, setPendingDelete] = React.useState<string | null>(null);
+  const [viewerIndex, setViewerIndex] = React.useState<number | null>(null);
 
   const images = imagesQuery.data ?? [];
 
@@ -242,7 +244,7 @@ export function VehicleImagesUploader({
         />
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {images.map((image) => (
+          {images.map((image, index) => (
             <figure
               key={image.id}
               className={cn(
@@ -250,12 +252,19 @@ export function VehicleImagesUploader({
                 image.isPrimary ? 'border-primary ring-1 ring-primary' : 'border-border',
               )}
             >
-              <img
-                src={image.url}
-                alt="Fotografia del vehiculo"
-                loading="lazy"
-                className="aspect-4/3 w-full object-cover"
-              />
+              <button
+                type="button"
+                className="block w-full cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                onClick={() => setViewerIndex(index)}
+                aria-label={`Ampliar fotografia ${index + 1} del vehiculo`}
+              >
+                <img
+                  src={image.url}
+                  alt="Fotografia del vehiculo"
+                  loading="lazy"
+                  className="aspect-4/3 w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+                />
+              </button>
 
               {image.isPrimary && (
                 <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[11px] font-medium text-primary-foreground">
@@ -293,6 +302,8 @@ export function VehicleImagesUploader({
           ))}
         </div>
       )}
+
+      <VehicleImageViewer images={images} index={viewerIndex} onIndexChange={setViewerIndex} />
 
       <ConfirmDialog
         open={pendingDelete !== null}
