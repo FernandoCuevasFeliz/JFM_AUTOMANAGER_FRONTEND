@@ -1,4 +1,4 @@
-import { Plus, ShieldCheck } from 'lucide-react';
+import { Pencil, Plus, ShieldCheck } from 'lucide-react';
 import * as React from 'react';
 import { PageHeader } from '@/components/page-header';
 import { EmptyState, ErrorState, TableSkeleton } from '@/components/states';
@@ -9,11 +9,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useAuth } from '@/features/auth/use-auth';
 import { RoleFormDialog } from '../components/role-form-dialog';
 import { useRoles } from '../hooks';
+import type { Role } from '../types';
 
 export function RolesPage() {
-  const { can } = useAuth();
+  const { can, user } = useAuth();
   const rolesQuery = useRoles();
   const [open, setOpen] = React.useState(false);
+  const [selectedRole, setSelectedRole] = React.useState<Role | null>(null);
   const roles = rolesQuery.data ?? [];
 
   return (
@@ -21,7 +23,7 @@ export function RolesPage() {
       <PageHeader
         title="Roles"
         description="Perfiles de acceso y capacidades asignables a los usuarios."
-        actions={can('users:write') && <Button onClick={() => setOpen(true)}><Plus aria-hidden />Nuevo rol</Button>}
+        actions={can('users:write') && <Button onClick={() => { setSelectedRole(null); setOpen(true); }}><Plus aria-hidden />Nuevo rol</Button>}
       />
 
       <Card>
@@ -32,13 +34,24 @@ export function RolesPage() {
             <EmptyState icon={ShieldCheck} title="Sin roles" description="Crea el primer perfil de acceso." />
           ) : (
             <Table>
-              <TableHeader><TableRow className="hover:bg-transparent"><TableHead>Rol</TableHead><TableHead>Descripcion</TableHead><TableHead>Permisos</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow className="hover:bg-transparent"><TableHead>Rol</TableHead><TableHead>Descripcion</TableHead><TableHead>Permisos</TableHead><TableHead className="text-right">Acciones</TableHead></TableRow></TableHeader>
               <TableBody>
                 {roles.map((role) => (
                   <TableRow key={role.id}>
-                    <TableCell className="font-medium capitalize">{role.name}</TableCell>
+                    <TableCell className="font-medium capitalize">
+                      {role.name}{role.id === user?.roleId && <Badge variant="secondary" className="ml-2">Tu rol</Badge>}
+                    </TableCell>
                     <TableCell className="max-w-md text-muted-foreground">{role.description ?? '—'}</TableCell>
                     <TableCell><Badge variant="blue">{role.permissions.length} permisos</Badge></TableCell>
+                    <TableCell className="text-right">
+                      {can('users:write') && (role.id === user?.roleId ? (
+                        <span className="text-xs text-muted-foreground" title="No puedes editar el rol asignado a tu propia cuenta">Protegido</span>
+                      ) : (
+                        <Button size="sm" variant="outline" onClick={() => { setSelectedRole(role); setOpen(true); }}>
+                          <Pencil aria-hidden />Editar
+                        </Button>
+                      ))}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -47,7 +60,7 @@ export function RolesPage() {
         </CardContent>
       </Card>
 
-      <RoleFormDialog open={open} onOpenChange={setOpen} />
+      <RoleFormDialog open={open} onOpenChange={setOpen} role={selectedRole} />
     </div>
   );
 }

@@ -60,6 +60,18 @@ export function useCreateRole() {
   });
 }
 
+export function useUpdateRole(id: string | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateRoleValues) => usersApi.updateRole(id as string, input),
+    onSuccess: (role) => {
+      toast.success(`Rol ${role.name} actualizado`);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.roles });
+    },
+    onError: (error) => handleApiError(error, { title: 'No se pudo actualizar el rol' }),
+  });
+}
+
 export function useManagedSessions() {
   const { can } = useAuth();
   return useQuery({

@@ -24,6 +24,10 @@ export const usersApi = {
     return api.post<Role>('/users/roles', input);
   },
 
+  updateRole(id: string, input: CreateRoleValues) {
+    return api.patch<Role>(`/users/roles/${id}`, input);
+  },
+
   sessions() {
     return api.get<ManagedSession[]>('/users/sessions');
   },

@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
+import * as React from 'react';
 import { FormField, fieldAria } from '@/components/form-field';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -14,8 +15,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { handleFormError } from '@/lib/errors';
-import { useCreateRole, usePermissions } from '../hooks';
+import { useCreateRole, usePermissions, useUpdateRole } from '../hooks';
 import { ROLE_FORM_FIELDS, createRoleSchema, type CreateRoleValues } from '../schemas';
+import type { Role } from '../types';
 
 const RESOURCE_LABELS: Record<string, string> = {
   users: 'Usuarios y roles', catalogs: 'Catalogos', vehicles: 'Vehiculos', clients: 'Clientes',
@@ -38,9 +40,14 @@ function groupPermissions(permissions: string[]) {
   return [...groups.entries()];
 }
 
-export function RoleFormDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+export function RoleFormDialog({ open, onOpenChange, role = null }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  role?: Role | null;
+}) {
   const permissionsQuery = usePermissions();
   const createRole = useCreateRole();
+  const updateRole = useUpdateRole(role?.id);
   const form = useForm<CreateRoleValues>({
     resolver: zodResolver(createRoleSchema),
     defaultValues: { name: '', description: null, permissions: [] },
@@ -49,9 +56,17 @@ export function RoleFormDialog({ open, onOpenChange }: { open: boolean; onOpenCh
   const { register, control, handleSubmit, reset, setError, formState: { errors } } = form;
   const groups = groupPermissions(permissionsQuery.data ?? []);
 
+  React.useEffect(() => {
+    if (!open) return;
+    reset(role
+      ? { name: role.name, description: role.description, permissions: [...role.permissions] }
+      : { name: '', description: null, permissions: [] });
+  }, [open, reset, role]);
+
   const submit = handleSubmit(async (values) => {
     try {
-      await createRole.mutateAsync(values);
+      if (role) await updateRole.mutateAsync(values);
+      else await createRole.mutateAsync(values);
       reset();
       onOpenChange(false);
     } catch (error) {
@@ -63,8 +78,10 @@ export function RoleFormDialog({ open, onOpenChange }: { open: boolean; onOpenCh
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Nuevo rol</DialogTitle>
-          <DialogDescription>Define el acceso antes de asignar este rol a un usuario.</DialogDescription>
+          <DialogTitle>{role ? `Editar rol ${role.name}` : 'Nuevo rol'}</DialogTitle>
+          <DialogDescription>
+            {role ? 'Actualiza el perfil y los permisos que reciben sus usuarios.' : 'Define el acceso antes de asignar este rol a un usuario.'}
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={submit} className="flex flex-col gap-5" noValidate>
@@ -114,7 +131,9 @@ export function RoleFormDialog({ open, onOpenChange }: { open: boolean; onOpenCh
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" loading={createRole.isPending}>Crear rol</Button>
+            <Button type="submit" loading={createRole.isPending || updateRole.isPending}>
+              {role ? 'Guardar cambios' : 'Crear rol'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
