@@ -1,5 +1,5 @@
 /**
- * Importes en letras, para el cuerpo de la factura.
+ * Importes en letras para los documentos impresos.
  *
  * En Republica Dominicana el monto escrito manda sobre el escrito en cifras
  * cuando los dos no coinciden, asi que esto no es un adorno: es la version

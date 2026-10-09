@@ -5,7 +5,7 @@ import { PrintLetterfoot, PrintLetterhead } from '@/components/print-letterhead'
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/features/auth/use-auth';
-import { COMPANY } from '@/features/billing/company';
+import { COMPANY } from '@/features/documents/company';
 import { formatDateTime } from '@/lib/dates';
 import { imprimirPagina } from '@/lib/use-print-mode';
 import { ExpensesPanel } from '../components/expenses-panel';
@@ -73,7 +73,7 @@ export function ReportsPage() {
 
       <PrintLetterhead
         title={tab.printTitle}
-        subtitle="Documento interno · sin valor fiscal"
+        subtitle="Documento interno"
         meta={[
           { label: 'Emitido', value: formatDateTime(new Date().toISOString()) },
           ...(firmante ? [{ label: 'Generado por', value: firmante }] : []),

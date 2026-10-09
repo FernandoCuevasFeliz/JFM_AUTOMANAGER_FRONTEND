@@ -1,6 +1,6 @@
 import type * as React from 'react';
 import { BrandLogo } from '@/components/brand-logo';
-import { COMPANY } from '@/features/billing/company';
+import { COMPANY } from '@/features/documents/company';
 
 /**
  * Membrete de las pantallas que se imprimen sin ser un documento.

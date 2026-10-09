@@ -4,7 +4,6 @@ import { queryKeys } from '@/lib/query-client';
 import { reportsApi } from './api';
 import type {
   AccountsReceivableParams,
-  FiscalDocumentsParams,
   MonthRangeParams,
   MonthlyExpensesParams,
   SalesBySalespersonParams,
@@ -97,17 +96,6 @@ export function useInventoryStatusReport() {
   return useQuery({
     queryKey: queryKeys.reportInventory,
     queryFn: () => reportsApi.inventoryStatus(),
-    enabled: can('reports:read'),
-    staleTime: REPORT_STALE_TIME,
-  });
-}
-
-export function useFiscalDocumentsReport(params: FiscalDocumentsParams = {}) {
-  const { can } = useAuth();
-
-  return useQuery({
-    queryKey: queryKeys.reportFiscal(params),
-    queryFn: () => reportsApi.fiscalDocuments(params),
     enabled: can('reports:read'),
     staleTime: REPORT_STALE_TIME,
   });

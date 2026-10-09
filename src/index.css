@@ -437,7 +437,7 @@
   }
 
   /* El margen ya lo pone `@page`: sumar el relleno lo duplicaria. */
-  .invoice-sheet {
+  .document-sheet {
     width: 100% !important;
     max-width: none !important;
     padding: 0 !important;

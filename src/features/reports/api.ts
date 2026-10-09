@@ -3,8 +3,6 @@ import type { QueryParams } from '@/lib/api-types';
 import type {
   AccountReceivable,
   AccountsReceivableParams,
-  FiscalDocumentsParams,
-  FiscalDocumentsRow,
   InventoryStatusRow,
   MonthRangeParams,
   MonthlyExpensesParams,
@@ -59,7 +57,4 @@ export const reportsApi = {
     return api.get<InventoryStatusRow[]>('/reports/inventory-status');
   },
 
-  fiscalDocuments(params: FiscalDocumentsParams = {}) {
-    return api.get<FiscalDocumentsRow[]>('/reports/fiscal-documents', params as QueryParams);
-  },
 };

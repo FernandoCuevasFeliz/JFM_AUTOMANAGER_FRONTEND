@@ -22,8 +22,7 @@ import type { Role } from '../types';
 const RESOURCE_LABELS: Record<string, string> = {
   users: 'Usuarios y roles', catalogs: 'Catalogos', vehicles: 'Vehiculos', clients: 'Clientes',
   suppliers: 'Proveedores', purchases: 'Compras', expenses: 'Gastos', quotations: 'Cotizaciones',
-  reservations: 'Reservas', sales: 'Ventas', payments: 'Pagos', invoices: 'Comprobantes',
-  'credit-notes': 'Notas de credito', audit: 'Auditoria', reports: 'Reportes',
+  reservations: 'Reservas', sales: 'Ventas', payments: 'Pagos', audit: 'Auditoria', reports: 'Reportes',
 };
 
 const ACTION_LABELS: Record<string, string> = {
@@ -42,8 +41,6 @@ function groupPermissions(permissions: string[]) {
 
 function isVisiblePermission(permission: string): boolean {
   if (permission.startsWith('audit:') || permission.startsWith('payments:')) return false;
-  if (permission.startsWith('credit-notes:')) return false;
-  if (permission.startsWith('invoices:')) return permission === 'invoices:read';
   return true;
 }
 

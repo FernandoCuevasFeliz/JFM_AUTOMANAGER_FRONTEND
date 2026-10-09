@@ -11,7 +11,7 @@ import {
   PrintTh,
   PrintTotal,
 } from '@/components/print-sheet';
-import { COMPANY } from '@/features/billing/company';
+import { COMPANY } from '@/features/documents/company';
 import { formatCivilDate } from '@/lib/dates';
 import { formatExchangeRate, formatMoney } from '@/lib/money';
 import { moneyToWords } from '@/lib/number-to-words';
@@ -25,13 +25,13 @@ export function SaleReceiptDocument({ sale }: { sale: Sale }) {
 
   return (
     <PrintSheet>
-      <PrintHeader title="Comprobante" subtitle="Documento interno · sin valor fiscal">
+      <PrintHeader title="Comprobante" subtitle="Documento interno de venta">
         <PrintMeta label="No." value={sale.saleNumber} mono strong />
         <PrintMeta label="Fecha" value={formatCivilDate(sale.saleDate)} mono />
         <PrintMeta label="Moneda" value={sale.currencyCode} mono />
       </PrintHeader>
 
-      <PrintStamp tone="muted">No valido como factura fiscal</PrintStamp>
+      <PrintStamp tone="muted">Comprobante interno</PrintStamp>
 
       <section className="mt-6 grid grid-cols-2 gap-6">
         <PrintBlock title="Cliente">
@@ -157,8 +157,8 @@ export function SaleReceiptDocument({ sale }: { sale: Sale }) {
 
       <PrintFooter>
         <p>
-          Este comprobante resume una venta registrada en JFM AutoManager. Es un documento interno
-          de soporte y no sustituye una factura con valor fiscal.
+          Este comprobante resume una venta registrada en JFM AutoManager y conserva el detalle
+          de las unidades, pagos y saldo de la operacion.
         </p>
         <p className="mt-1">
           {sale.saleNumber} · {COMPANY.name} · {vigentes.length} unidad(es) vigente(s)

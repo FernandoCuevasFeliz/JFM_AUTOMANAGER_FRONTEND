@@ -1,10 +1,10 @@
 import type * as React from 'react';
 import { BrandLogo } from '@/components/brand-logo';
-import { COMPANY } from '@/features/billing/company';
+import { COMPANY } from '@/features/documents/company';
 import { cn } from '@/lib/utils';
 
 /**
- * Piezas comunes de los documentos imprimibles (factura, cotizacion).
+ * Piezas comunes de los documentos imprimibles del sistema.
  *
  * Todas usan colores fijos en vez de tokens del tema: son papel. En modo oscuro
  * la hoja se sigue viendo blanca porque lo que se previsualiza es el impreso, no
@@ -30,7 +30,7 @@ export function PrintSheet({
   return (
     <article
       className={cn(
-        'invoice-sheet mx-auto w-full max-w-[216mm] bg-white p-[12mm]',
+        'document-sheet mx-auto w-full max-w-[216mm] bg-white p-[12mm]',
         'text-[10.5pt] leading-snug text-slate-900',
         className,
       )}

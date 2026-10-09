@@ -1,8 +1,6 @@
 import type { PageQuery } from '@/lib/api-types';
-import type { NcfType } from '@/features/billing/types';
 import type {
   ExpenseScope,
-  FiscalDocStatus,
   SaleStatus,
   VehicleStatus,
 } from '@/lib/status';
@@ -187,36 +185,6 @@ export interface MonthlyReturnsRow {
 export interface InventoryStatusRow {
   readonly status: VehicleStatus;
   readonly vehicleCount: number;
-}
-
-// --- Comprobantes fiscales ---------------------------------------------------
-
-export type FiscalDocumentKind = 'invoice' | 'credit_note';
-
-export const FISCAL_DOCUMENT_KINDS: readonly FiscalDocumentKind[] = ['invoice', 'credit_note'];
-
-export const FISCAL_DOCUMENT_KIND_LABELS: Record<FiscalDocumentKind, string> = {
-  invoice: 'Factura',
-  credit_note: 'Nota de credito',
-};
-
-export interface FiscalDocumentsRow {
-  /** Mes de emision; el de registro mientras el comprobante siga sin emitirse. */
-  readonly month: ReportMonth;
-  readonly documentKind: FiscalDocumentKind;
-  /** Las notas de credito son siempre E34. */
-  readonly ncfType: NcfType;
-  readonly status: FiscalDocStatus;
-  readonly currencyCode: string;
-  readonly documentCount: number;
-  readonly totalAmount: number;
-  readonly totalAmountConverted: number;
-}
-
-export interface FiscalDocumentsParams extends MonthRangeParams {
-  documentKind?: FiscalDocumentKind;
-  ncfType?: NcfType;
-  status?: FiscalDocStatus;
 }
 
 // --- Ayudas ------------------------------------------------------------------

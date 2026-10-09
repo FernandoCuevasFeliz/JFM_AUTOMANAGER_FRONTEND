@@ -11,8 +11,8 @@ import {
   PrintTh,
   PrintTotal,
 } from '@/components/print-sheet';
-import { COMPANY } from '@/features/billing/company';
-import { splitTax } from '@/features/billing/tax';
+import { COMPANY } from '@/features/documents/company';
+import { splitTax } from '@/features/documents/tax';
 import type { Client } from '@/features/clients/types';
 import { clientDisplayName } from '@/features/clients/types';
 import type { Vehicle } from '@/features/vehicles/types';
@@ -24,9 +24,7 @@ import type { Quotation } from '../types';
 /**
  * Cotizacion impresa.
  *
- * No es un comprobante fiscal y el papel lo dice: una cotizacion no lleva NCF y
- * no obliga a nada mas alla de su vigencia. Lo que si manda es esa vigencia, asi
- * que va destacada arriba y repetida al pie.
+ * Documento de oferta: la vigencia va destacada arriba y repetida al pie.
  */
 export function QuotationDocument({
   quotation,
@@ -59,13 +57,7 @@ export function QuotationDocument({
           : null;
 
   /*
-   * El mismo desglose que la factura, literalmente.
-   *
-   * Aqui habia una copia a mano que solo contemplaba el impuesto incluido en el
-   * precio. Con la configuracion contraria imprimia «ITBIS 0,00» y un total
-   * igual al precio pelado, mientras que la factura de esa venta sumaba el 18 %
-   * por encima: el cliente veia una cifra en la cotizacion y otra distinta en
-   * la factura.
+   * El desglose se centraliza para que el precio ofrecido y el total coincidan.
    */
   const impuestos = splitTax(quotation.quotedPrice);
   const { subtotal, taxAmount: impuesto, total } = impuestos;
@@ -84,7 +76,7 @@ export function QuotationDocument({
 
   return (
     <PrintSheet>
-      <PrintHeader title="Cotizacion" subtitle="Documento sin valor fiscal">
+      <PrintHeader title="Cotizacion" subtitle="Oferta comercial">
         <PrintMeta label="No." value={quotation.quotationNumber} mono strong />
         <PrintMeta label="Emitida" value={formatCivilDate(quotation.createdAt.slice(0, 10))} mono />
         <PrintMeta label="Valida hasta" value={formatCivilDate(quotation.validUntil)} mono strong />
@@ -200,7 +192,7 @@ export function QuotationDocument({
           <strong className="font-semibold text-slate-700">
             {formatCivilDate(quotation.validUntil)}
           </strong>
-          . Esta cotizacion no es un comprobante fiscal y no genera obligacion de venta.
+          . Esta cotizacion es una oferta comercial y no genera obligacion de venta.
         </p>
         <p className="mt-1">
           {quotation.quotationNumber} · {COMPANY.name}

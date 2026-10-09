@@ -73,12 +73,6 @@ export const queryKeys = {
   reportReturnsMonthly: (params?: unknown) => ['reports', 'returns-monthly', params] as const,
   reportExpensesMonthly: (params?: unknown) => ['reports', 'expenses-monthly', params] as const,
   reportInventory: ['reports', 'inventory'] as const,
-  reportFiscal: (params?: unknown) => ['reports', 'fiscal', params] as const,
-
-  invoices: (params?: unknown) => ['invoices', params] as const,
-  invoice: (id: string) => ['invoices', 'detail', id] as const,
-  invoiceBySale: (saleId: string) => ['invoices', 'by-sale', saleId] as const,
-
   users: (params?: unknown) => ['users', params] as const,
   user: (id: string) => ['users', 'detail', id] as const,
   roles: ['users', 'roles'] as const,

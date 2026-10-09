@@ -102,7 +102,7 @@ export function SalesPanel() {
     return [...mapa.values()].sort((a, b) => b.total - a.total);
   }, [salespersonRows]);
 
-  const facturado = sumConverted(monthlyRows, (row) => row.totalAmountConverted);
+  const vendido = sumConverted(monthlyRows, (row) => row.totalAmountConverted);
   const operaciones = monthlyRows.reduce((total, row) => total + row.salesCount, 0);
   /*
    * Documentos y unidades son dos cifras distintas desde que una venta puede
@@ -110,7 +110,7 @@ export function SalesPanel() {
    * es lo que mide el valor de una operacion comercial.
    */
   const unidades = monthlyRows.reduce((total, row) => total + row.vehiclesCount, 0);
-  const ticket = operaciones > 0 ? facturado / operaciones : 0;
+  const ticket = operaciones > 0 ? vendido / operaciones : 0;
 
   /*
    * Tasa de devolucion: unidades devueltas sobre unidades entregadas. Es la
@@ -129,8 +129,8 @@ export function SalesPanel() {
       <ReportTotals
         items={[
           {
-            label: `Facturado (${REPORT_CURRENCY})`,
-            value: formatMoney(facturado, REPORT_CURRENCY),
+            label: `Vendido (${REPORT_CURRENCY})`,
+            value: formatMoney(vendido, REPORT_CURRENCY),
           },
           { label: 'Operaciones', value: formatNumber(operaciones) },
           {
