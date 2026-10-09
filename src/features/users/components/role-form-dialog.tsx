@@ -40,6 +40,13 @@ function groupPermissions(permissions: string[]) {
   return [...groups.entries()];
 }
 
+function isVisiblePermission(permission: string): boolean {
+  if (permission.startsWith('audit:') || permission.startsWith('payments:')) return false;
+  if (permission.startsWith('credit-notes:')) return false;
+  if (permission.startsWith('invoices:')) return permission === 'invoices:read';
+  return true;
+}
+
 export function RoleFormDialog({ open, onOpenChange, role = null }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -54,7 +61,7 @@ export function RoleFormDialog({ open, onOpenChange, role = null }: {
   });
 
   const { register, control, handleSubmit, reset, setError, formState: { errors } } = form;
-  const groups = groupPermissions(permissionsQuery.data ?? []);
+  const groups = groupPermissions((permissionsQuery.data ?? []).filter(isVisiblePermission));
 
   React.useEffect(() => {
     if (!open) return;

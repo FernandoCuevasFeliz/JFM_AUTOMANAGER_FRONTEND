@@ -1,5 +1,6 @@
-import { Pencil, Plus, ShieldCheck } from 'lucide-react';
+import { Pencil, Plus, ShieldCheck, Trash2 } from 'lucide-react';
 import * as React from 'react';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 import { PageHeader } from '@/components/page-header';
 import { EmptyState, ErrorState, TableSkeleton } from '@/components/states';
 import { Badge } from '@/components/ui/badge';
@@ -8,15 +9,18 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAuth } from '@/features/auth/use-auth';
 import { RoleFormDialog } from '../components/role-form-dialog';
-import { useRoles } from '../hooks';
+import { useDeleteRole, useRoles } from '../hooks';
 import type { Role } from '../types';
 
 export function RolesPage() {
   const { can, user } = useAuth();
   const rolesQuery = useRoles();
+  const deleteRole = useDeleteRole();
   const [open, setOpen] = React.useState(false);
   const [selectedRole, setSelectedRole] = React.useState<Role | null>(null);
+  const [deleteTarget, setDeleteTarget] = React.useState<Role | null>(null);
   const roles = rolesQuery.data ?? [];
+  const isAdmin = user?.roleName.toLowerCase() === 'admin';
 
   return (
     <div className="flex flex-col gap-6">
@@ -47,9 +51,16 @@ export function RolesPage() {
                       {can('users:write') && (role.id === user?.roleId ? (
                         <span className="text-xs text-muted-foreground" title="No puedes editar el rol asignado a tu propia cuenta">Protegido</span>
                       ) : (
-                        <Button size="sm" variant="outline" onClick={() => { setSelectedRole(role); setOpen(true); }}>
-                          <Pencil aria-hidden />Editar
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          <Button size="sm" variant="outline" onClick={() => { setSelectedRole(role); setOpen(true); }}>
+                            <Pencil aria-hidden />Editar
+                          </Button>
+                          {isAdmin && (
+                            <Button size="icon-sm" variant="outline" aria-label={`Eliminar rol ${role.name}`} onClick={() => setDeleteTarget(role)}>
+                              <Trash2 aria-hidden />
+                            </Button>
+                          )}
+                        </div>
                       ))}
                     </TableCell>
                   </TableRow>
@@ -61,6 +72,20 @@ export function RolesPage() {
       </Card>
 
       <RoleFormDialog open={open} onOpenChange={setOpen} role={selectedRole} />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(nextOpen) => !nextOpen && setDeleteTarget(null)}
+        title="Eliminar rol"
+        description={<>Se eliminara el rol <strong>{deleteTarget?.name}</strong>. Solo es posible si no esta asignado a ningun usuario.</>}
+        confirmLabel="Eliminar"
+        destructive
+        loading={deleteRole.isPending}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          deleteRole.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) });
+        }}
+      />
     </div>
   );
 }

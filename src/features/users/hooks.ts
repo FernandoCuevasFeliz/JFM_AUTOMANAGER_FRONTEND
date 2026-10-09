@@ -72,6 +72,18 @@ export function useUpdateRole(id: string | undefined) {
   });
 }
 
+export function useDeleteRole() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => usersApi.deleteRole(id),
+    onSuccess: () => {
+      toast.success('Rol eliminado');
+      void queryClient.invalidateQueries({ queryKey: queryKeys.roles });
+    },
+    onError: (error) => handleApiError(error, { title: 'No se pudo eliminar el rol' }),
+  });
+}
+
 export function useManagedSessions() {
   const { can } = useAuth();
   return useQuery({

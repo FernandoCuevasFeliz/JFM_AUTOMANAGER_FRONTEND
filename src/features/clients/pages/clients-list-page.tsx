@@ -136,12 +136,12 @@ export function ClientsListPage() {
                       Editar
                     </DropdownMenuItem>
                   )}
-                  {canDelete && (
+                  {canDelete && row.original.isActive && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem destructive onSelect={() => setDeleteTarget(row.original)}>
                         <Trash2 />
-                        Eliminar
+                        Deshabilitar
                       </DropdownMenuItem>
                     </>
                   )}
@@ -233,15 +233,14 @@ export function ClientsListPage() {
       <ConfirmDialog
         open={deleteTarget !== null}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
-        title="Eliminar cliente"
+        title="Deshabilitar cliente"
         description={
           <>
-            Se eliminara <strong>{deleteTarget ? clientDisplayName(deleteTarget) : ''}</strong>. Si
-            tiene cotizaciones, reservas o ventas registradas, el sistema lo impedira: en ese caso
-            desactivalo en lugar de borrarlo.
+            <strong>{deleteTarget ? clientDisplayName(deleteTarget) : ''}</strong> quedara inactivo
+            y no podra usarse en nuevas operaciones. Su registro y su historial se conservaran.
           </>
         }
-        confirmLabel="Eliminar"
+        confirmLabel="Deshabilitar"
         destructive
         loading={deleteClient.isPending}
         onConfirm={() => {

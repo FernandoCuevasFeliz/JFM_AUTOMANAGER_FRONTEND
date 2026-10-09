@@ -28,6 +28,10 @@ export const usersApi = {
     return api.patch<Role>(`/users/roles/${id}`, input);
   },
 
+  deleteRole(id: string) {
+    return api.delete(`/users/roles/${id}`);
+  },
+
   sessions() {
     return api.get<ManagedSession[]>('/users/sessions');
   },

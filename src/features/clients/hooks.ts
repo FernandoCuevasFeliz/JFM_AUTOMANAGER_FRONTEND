@@ -63,11 +63,11 @@ export function useDeleteClient() {
   return useMutation({
     mutationFn: (id: string) => clientsApi.remove(id),
     onSuccess: () => {
-      toast.success('Cliente eliminado');
+      toast.success('Cliente deshabilitado');
       invalidate();
     },
     // Si tiene cotizaciones, reservas o ventas el backend responde 422 y el
     // mensaje sugiere desactivarlo en su lugar.
-    onError: (error) => handleApiError(error, { title: 'No se pudo eliminar el cliente' }),
+    onError: (error) => handleApiError(error, { title: 'No se pudo deshabilitar el cliente' }),
   });
 }

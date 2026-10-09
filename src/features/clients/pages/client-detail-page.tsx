@@ -32,12 +32,7 @@ export function ClientDetailPage() {
   const clientQuery = useClient(id);
   const deleteClient = useDeleteClient();
 
-  /*
-   * El historial comercial del cliente no es decorativo: es lo que explica por
-   * que el backend puede bloquear su borrado (§7 de API.md). Se piden pocas
-   * filas de cada uno porque aqui solo interesa el resumen; el detalle vive en
-   * su propio modulo.
-   */
+  // El historial se resume aqui; la accion administrativa solo desactiva al cliente.
   const quotationsQuery = useQuotations({ clientId: id, pageSize: 5 });
   const reservationsQuery = useReservations({ clientId: id, pageSize: 5 });
   const salesQuery = useSales({ clientId: id, pageSize: 5 });
@@ -57,7 +52,6 @@ export function ClientDetailPage() {
   const totalCotizaciones = quotationsQuery.data?.meta?.total ?? 0;
   const totalReservas = reservationsQuery.data?.meta?.total ?? 0;
   const totalVentas = salesQuery.data?.meta?.total ?? 0;
-  const conHistorial = totalCotizaciones + totalReservas + totalVentas > 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -79,24 +73,15 @@ export function ClientDetailPage() {
                 Editar
               </Button>
             )}
-            {/*
-              El backend bloquea el borrado si el cliente tiene documentos. El
-              boton se queda visible y deshabilitado con el motivo: esconderlo
-              haria pensar que la aplicacion no sabe borrar clientes.
-            */}
             {can('clients:delete') && (
               <Button
                 variant="outline"
                 onClick={() => setDeleteOpen(true)}
-                disabled={conHistorial}
-                title={
-                  conHistorial
-                    ? 'No se puede eliminar: tiene cotizaciones, reservas o ventas. Desactivalo en su lugar.'
-                    : undefined
-                }
+                disabled={!client.isActive}
+                title={!client.isActive ? 'El cliente ya esta deshabilitado' : undefined}
               >
                 <Trash2 />
-                Eliminar
+                Deshabilitar
               </Button>
             )}
           </>
@@ -217,9 +202,9 @@ export function ClientDetailPage() {
       <ConfirmDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        title={`Eliminar a ${nombre}`}
-        description="El cliente deja de aparecer en los listados. Su historial se conserva."
-        confirmLabel="Eliminar"
+        title={`Deshabilitar a ${nombre}`}
+        description="El cliente quedara inactivo y no podra usarse en nuevas operaciones. Su registro y todo su historial se conservaran."
+        confirmLabel="Deshabilitar"
         destructive
         loading={deleteClient.isPending}
         onConfirm={() => {
