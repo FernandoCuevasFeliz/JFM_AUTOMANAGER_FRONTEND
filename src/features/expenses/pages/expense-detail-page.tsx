@@ -110,7 +110,7 @@ export function ExpenseDetailPage() {
         <DetailCard title="Imputacion">
           {expense.vehicleId ? (
             <div className="flex flex-col gap-3">
-              <p className="text-[13px] leading-relaxed text-muted-foreground">
+              <p className="text-[calc(0.8125rem*var(--reading-scale))] leading-relaxed text-muted-foreground">
                 Este gasto suma al costo real de una unidad concreta.
               </p>
               <DetailItem label="Vehiculo">
@@ -128,7 +128,7 @@ export function ExpenseDetailPage() {
               )}
             </div>
           ) : (
-            <p className="text-[13px] leading-relaxed text-muted-foreground">
+            <p className="text-[calc(0.8125rem*var(--reading-scale))] leading-relaxed text-muted-foreground">
               Gasto general de la empresa. No se imputa a ninguna unidad, asi que no afecta al costo
               ni al margen de ningun vehiculo.
             </p>

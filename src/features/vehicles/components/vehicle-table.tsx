@@ -179,7 +179,7 @@ export function VehicleTable({
                         <span className="flex flex-col">
                           Eliminar
                           {bloqueadoPorEstado && (
-                            <span className="text-[11px] leading-tight text-muted-foreground">
+                            <span className="text-[calc(0.6875rem*var(--reading-scale))] leading-tight text-muted-foreground">
                               {motivoBloqueo}
                             </span>
                           )}

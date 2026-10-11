@@ -54,7 +54,7 @@ export function SaleItemsField({
     <div className="flex flex-col gap-3">
       <div className="flex items-end justify-between gap-4">
         <div className="flex flex-col gap-0.5">
-          <span className="text-[13px] font-medium">Vehiculos de la venta</span>
+          <span className="text-[calc(0.8125rem*var(--reading-scale))] font-medium">Vehiculos de la venta</span>
           <span className="text-xs text-muted-foreground">
             Cada unidad lleva su propio precio pactado.
           </span>
@@ -100,7 +100,7 @@ export function SaleItemsField({
 
       {items.length > 1 && (
         <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3.5 py-2.5">
-          <span className="text-[13px] font-medium">
+          <span className="text-[calc(0.8125rem*var(--reading-scale))] font-medium">
             Total de la venta · {items.length} unidades
           </span>
           <span className="num text-base font-semibold">{formatMoney(total, currencyCode)}</span>

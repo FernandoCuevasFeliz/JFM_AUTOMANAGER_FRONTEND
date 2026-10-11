@@ -117,11 +117,11 @@ export function SupplierDetailPage() {
           }
         >
           {!can('purchases:read') ? (
-            <p className="text-[13px] text-muted-foreground">
+            <p className="text-[calc(0.8125rem*var(--reading-scale))] text-muted-foreground">
               Tu usuario no tiene acceso a las compras.
             </p>
           ) : purchases.length === 0 ? (
-            <p className="text-[13px] text-muted-foreground">
+            <p className="text-[calc(0.8125rem*var(--reading-scale))] text-muted-foreground">
               Sin compras registradas a este proveedor.
             </p>
           ) : (

@@ -74,7 +74,7 @@ export function UserDetailPage() {
 
       <div className="flex flex-wrap items-center gap-3">
         <span
-          className="flex size-9 items-center justify-center rounded-full text-[13px] font-semibold text-white"
+          className="flex size-9 items-center justify-center rounded-full text-[calc(0.8125rem*var(--reading-scale))] font-semibold text-white"
           style={{ backgroundColor: accent.color }}
           aria-hidden
         >
@@ -113,13 +113,13 @@ export function UserDetailPage() {
 
         <DetailCard title={`Permisos de ${user.roleName}`}>
           {!role ? (
-            <p className="text-[13px] text-muted-foreground">
+            <p className="text-[calc(0.8125rem*var(--reading-scale))] text-muted-foreground">
               No se pudieron cargar los permisos del rol.
             </p>
           ) : (
             <div className="flex flex-col gap-3">
               {role.description && (
-                <p className="text-[13px] leading-relaxed text-muted-foreground">
+                <p className="text-[calc(0.8125rem*var(--reading-scale))] leading-relaxed text-muted-foreground">
                   {role.description}
                 </p>
               )}

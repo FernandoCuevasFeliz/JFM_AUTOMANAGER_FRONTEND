@@ -112,7 +112,7 @@ export function RoleFormDialog({ open, onOpenChange, role = null }: {
                           const action = permission.split(':')[1] ?? permission;
                           const checked = field.value.includes(permission);
                           return (
-                            <label key={permission} className="flex cursor-pointer items-center gap-2.5 text-[13px] text-muted-foreground">
+                            <label key={permission} className="flex cursor-pointer items-center gap-2.5 text-[calc(0.8125rem*var(--reading-scale))] text-muted-foreground">
                               <Checkbox
                                 checked={checked}
                                 onCheckedChange={(value) => field.onChange(

@@ -88,7 +88,7 @@ export function SessionsPage() {
         )}
       />
 
-      <p className="flex items-start gap-2.5 rounded-lg border border-border bg-muted/50 px-3.5 py-3 text-[13px] leading-relaxed text-muted-foreground">
+      <p className="flex items-start gap-2.5 rounded-lg border border-border bg-muted/50 px-3.5 py-3 text-[calc(0.8125rem*var(--reading-scale))] leading-relaxed text-muted-foreground">
         <ShieldCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
         <span>{isAdministrator
           ? 'Cada cierre exige confirmacion y muestra el usuario afectado. La sesion no podra renovarse.'

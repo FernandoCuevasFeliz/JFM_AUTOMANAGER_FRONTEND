@@ -91,10 +91,10 @@ export function LoginPage() {
 
         <div className="relative flex flex-col gap-5">
           <span className="h-1 w-14 rounded-full bg-signal" aria-hidden />
-          <h1 className="max-w-md text-[2.5rem] font-bold leading-[1.08] tracking-[-0.03em]">
+          <h1 className="max-w-md text-[calc(2.5rem*var(--heading-scale))] font-bold leading-[1.08] tracking-[-0.03em]">
             Inventario y ventas de vehiculos, en un solo lugar.
           </h1>
-          <p className="max-w-md text-[15px] leading-relaxed text-sidebar-foreground">
+          <p className="max-w-md text-[calc(0.9375rem*var(--reading-scale))] leading-relaxed text-sidebar-foreground">
             Controla la importacion, los costos por unidad y el ciclo comercial completo, desde la
             cotizacion hasta el ultimo cobro.
           </p>
@@ -124,7 +124,7 @@ export function LoginPage() {
           </div>
 
           <div className="mb-7 flex flex-col gap-1.5">
-            <h2 className="text-[26px] font-bold leading-tight tracking-[-0.025em]">
+            <h2 className="text-[calc(1.625rem*var(--heading-scale))] font-bold leading-tight tracking-[-0.025em]">
               Iniciar sesion
             </h2>
             <p className="text-sm text-muted-foreground">
@@ -168,7 +168,7 @@ export function LoginPage() {
             {errors.root && (
               <p
                 role="alert"
-                className="flex items-start gap-2 rounded-md border border-danger/25 bg-danger/8 px-3 py-2.5 text-[13px] font-medium text-danger"
+                className="flex items-start gap-2 rounded-md border border-danger/25 bg-danger/8 px-3 py-2.5 text-[calc(0.8125rem*var(--reading-scale))] font-medium text-danger"
               >
                 <AlertCircle className="mt-px size-4 shrink-0" aria-hidden />
                 {errors.root.message}

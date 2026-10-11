@@ -154,7 +154,7 @@ export function SaleItemsPanel({ sale }: { sale: Sale }) {
 
         {vigentes.length > 1 && (
           <div className="flex items-center justify-between border-t border-border pt-3">
-            <span className="text-[13px] font-medium">Total vigente</span>
+            <span className="text-[calc(0.8125rem*var(--reading-scale))] font-medium">Total vigente</span>
             <span className="num text-base font-semibold">
               {formatMoney(sale.salePrice, sale.currencyCode)}
             </span>

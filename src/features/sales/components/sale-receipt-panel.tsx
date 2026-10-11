@@ -25,7 +25,7 @@ export function SaleReceiptPanel({ sale }: { sale: Sale }) {
           </div>
         </div>
 
-        <dl className="flex flex-col gap-1.5 text-[13px]">
+        <dl className="flex flex-col gap-1.5 text-[calc(0.8125rem*var(--reading-scale))]">
           <div className="flex justify-between gap-4">
             <dt className="text-muted-foreground">Total</dt>
             <dd className="num font-medium">{formatMoney(sale.salePrice, sale.currencyCode)}</dd>

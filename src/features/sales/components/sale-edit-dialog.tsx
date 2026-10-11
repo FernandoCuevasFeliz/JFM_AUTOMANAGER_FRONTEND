@@ -104,7 +104,7 @@ export function SaleEditDialog({
             El total no se edita aqui: es la suma de las lineas. Se muestra para
             situar, con un enlace mental a donde si se corrige.
           */}
-          <p className="rounded-lg border border-border bg-muted/40 px-3.5 py-3 text-[13px] leading-relaxed text-muted-foreground">
+          <p className="rounded-lg border border-border bg-muted/40 px-3.5 py-3 text-[calc(0.8125rem*var(--reading-scale))] leading-relaxed text-muted-foreground">
             Total actual:{' '}
             <strong className="num font-semibold text-foreground">
               {formatMoney(sale.salePrice, sale.currencyCode)}

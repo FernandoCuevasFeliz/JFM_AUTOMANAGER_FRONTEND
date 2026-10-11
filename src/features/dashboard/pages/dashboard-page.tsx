@@ -100,11 +100,11 @@ export function DashboardPage() {
           className="flex shrink-0 items-center gap-2.5 rounded-full border border-border bg-[var(--user-accent-soft)] py-1.5 pl-1.5 pr-3.5"
           title={`Color de sesion: ${accent.name}`}
         >
-          <span className="flex size-7 items-center justify-center rounded-full bg-[var(--user-accent)] text-[11px] font-semibold text-white">
+          <span className="flex size-7 items-center justify-center rounded-full bg-[var(--user-accent)] text-[calc(0.6875rem*var(--reading-scale))] font-semibold text-white">
             {`${user?.firstName?.charAt(0) ?? ''}${user?.lastName?.charAt(0) ?? ''}`.toUpperCase()}
           </span>
           <span className="flex flex-col leading-none">
-            <span className="text-[13px] font-medium">
+            <span className="text-[calc(0.8125rem*var(--reading-scale))] font-medium">
               {user?.firstName} {user?.lastName}
             </span>
             <span className="label-micro mt-0.5 text-muted-foreground">{user?.roleName}</span>
@@ -349,7 +349,7 @@ function MetricCard({
           <span className="label-micro text-muted-foreground">{label}</span>
           <span
             className={cn(
-              'num truncate text-[26px] font-semibold leading-none',
+              'num truncate text-[calc(1.625rem*var(--heading-scale))] font-semibold leading-none',
               tone === 'positive' && 'text-success',
               tone === 'warning' && 'text-warning',
             )}

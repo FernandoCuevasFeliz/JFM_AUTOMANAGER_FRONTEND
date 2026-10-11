@@ -95,7 +95,7 @@ export function ReservationDetailPage() {
         explicara aqui. Quien mira esta ficha es justo quien necesita saberlo.
       */}
       {activa && vencida && (
-        <div className="flex flex-col gap-3 rounded-lg border border-warning/30 bg-warning/8 px-3.5 py-3 text-[13px] leading-relaxed sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-lg border border-warning/30 bg-warning/8 px-3.5 py-3 text-[calc(0.8125rem*var(--reading-scale))] leading-relaxed sm:flex-row sm:items-center sm:justify-between">
           <span>
             El plazo se cumplio pero la reserva sigue activa y la unidad continua bloqueada: el
             vencimiento no corre solo. Al aplicarlo, esta y todas las demas reservas caducadas

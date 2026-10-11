@@ -7,6 +7,7 @@ import {
   MonitorSmartphone,
   Moon,
   Sun,
+  Type,
   X,
 } from 'lucide-react';
 import * as React from 'react';
@@ -19,10 +20,16 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/features/auth/use-auth';
 import { useTheme } from '@/lib/use-theme';
+import { FONT_SIZE_OPTIONS, useFontSize } from '@/lib/use-font-size';
 import { roleAccent, roleAccentStyle, userAccent } from '@/lib/user-accent';
 import { cn } from '@/lib/utils';
 import { BRAND_ICON, NAV_GROUPS } from './sidebar-nav';
@@ -40,6 +47,7 @@ export function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const { fontSize, setFontSize } = useFontSize();
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
   // Navegar cierra el cajon: en movil queda tapando el contenido.
@@ -106,7 +114,7 @@ export function AppShell() {
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col bg-sidebar',
+          'fixed inset-y-0 left-0 z-50 flex w-[16.5rem] max-w-[calc(100vw-2rem)] flex-col bg-sidebar',
           'transition-transform duration-250 ease-out lg:translate-x-0',
           // Al papel solo va el documento, nunca el cromo de la aplicacion.
           'print:hidden',
@@ -137,7 +145,7 @@ export function AppShell() {
                 <BRAND_ICON className="size-4.5" aria-hidden />
               </span>
               <span className="flex flex-col leading-none">
-                <span className="text-[15px] font-bold tracking-tight text-sidebar-accent-foreground">
+                <span className="text-[calc(0.9375rem*var(--reading-scale))] font-bold tracking-tight text-sidebar-accent-foreground">
                   JFM<span className="font-normal text-sidebar-foreground"> AutoManager</span>
                 </span>
                 <span className="label-micro mt-1 text-sidebar-muted">EJGH Auto Import</span>
@@ -167,7 +175,7 @@ export function AppShell() {
                       end={item.end}
                       className={({ isActive }) =>
                         cn(
-                          'relative flex h-9 items-center gap-3 rounded-md pl-4 pr-3 text-[13.5px] font-medium',
+                          'relative flex min-h-9 items-center gap-3 rounded-md py-1.5 pl-4 pr-3 text-[calc(0.84375rem*var(--reading-scale))] font-medium',
                           'transition-colors duration-150',
                           // Riel rojo de 3px: marca la posicion sin depender solo
                           // del relleno, que en oscuro se lee muy debil.
@@ -202,8 +210,8 @@ export function AppShell() {
         </div>
       </aside>
 
-      <div className="lg:pl-[264px] print:pl-0">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-md sm:px-6 print:hidden">
+      <div className="lg:pl-[16.5rem] print:pl-0">
+        <header className="sticky top-0 z-30 flex min-h-14 items-center gap-3 border-b border-border bg-background/80 px-4 py-2 backdrop-blur-md sm:px-6 print:hidden">
           <button
             type="button"
             className="hit-target flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground lg:hidden"
@@ -239,7 +247,7 @@ export function AppShell() {
                     </AvatarFallback>
                   </Avatar>
                   <span className="hidden flex-col leading-tight sm:flex">
-                    <span className="text-[13px] font-medium">
+                    <span className="text-[calc(0.8125rem*var(--reading-scale))] font-medium">
                       {user?.firstName} {user?.lastName}
                     </span>
                     <span className="label-micro text-muted-foreground">{user?.roleName}</span>
@@ -248,7 +256,7 @@ export function AppShell() {
                 </button>
               </DropdownMenuTrigger>
 
-              <DropdownMenuContent align="end" className="w-60">
+              <DropdownMenuContent align="end" className="w-60 max-w-[calc(100vw-1rem)] max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto">
                 <DropdownMenuLabel className="font-normal">
                   <span className="flex flex-col gap-0.5">
                     <span className="text-sm font-medium">
@@ -272,6 +280,26 @@ export function AppShell() {
                   </Link>
                 </DropdownMenuItem>
 
+                <DropdownMenuSeparator />
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Type aria-hidden />
+                    Tamaño de letra
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuRadioGroup
+                      aria-label="Tamaño de letra"
+                      value={fontSize}
+                      onValueChange={setFontSize}
+                    >
+                      {FONT_SIZE_OPTIONS.map((option) => (
+                        <DropdownMenuRadioItem key={option.value} value={option.value}>
+                          {option.label}
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem destructive onSelect={() => void handleLogout()}>
                   <LogOut />

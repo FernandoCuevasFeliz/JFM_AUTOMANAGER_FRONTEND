@@ -29,7 +29,7 @@ export function PageHeader({
       {backTo && (
         <Link
           to={backTo}
-          className="hit-target -ml-1 inline-flex w-fit items-center gap-1 rounded-md py-0.5 pl-1 pr-2 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+          className="hit-target -ml-1 inline-flex w-fit items-center gap-1 rounded-md py-0.5 pl-1 pr-2 text-[calc(0.8125rem*var(--reading-scale))] font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
           <ChevronLeft className="size-4" aria-hidden />
           {backLabel}
@@ -39,7 +39,7 @@ export function PageHeader({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 flex-col gap-1">
           {eyebrow && <span className="label-micro text-muted-foreground">{eyebrow}</span>}
-          <h1 className="truncate text-[27px] font-bold leading-tight tracking-[-0.03em]">{title}</h1>
+          <h1 className="truncate text-[calc(1.6875rem*var(--heading-scale))] font-bold leading-tight tracking-[-0.03em]">{title}</h1>
           {description && (
             <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">{description}</p>
           )}

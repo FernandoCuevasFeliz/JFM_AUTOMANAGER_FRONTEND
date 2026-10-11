@@ -21,7 +21,25 @@
 
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
+/* Aumenta la tipografia sin ampliar la unidad rem del layout: los paneles,
+ * margenes e iconos conservan su tamaño. Los titulos crecen menos que el texto
+ * de lectura para mantener la jerarquia sin dominar la pantalla.
+ * Solo en pantalla para conservar las medidas de los documentos impresos. */
+@media screen {
+  :root[data-font-size='large'] {
+    --reading-scale: 1.08;
+    --heading-scale: 1.04;
+  }
+
+  :root[data-font-size='extra-large'] {
+    --reading-scale: 1.16;
+    --heading-scale: 1.08;
+  }
+}
+
 :root {
+  --reading-scale: 1;
+  --heading-scale: 1;
   --radius: 0.5rem;
 
   /* --- Superficies ------------------------------------------------------- */
@@ -140,6 +158,16 @@
 }
 
 @theme inline {
+  --text-xs: calc(0.75rem * var(--reading-scale));
+  --text-sm: calc(0.875rem * var(--reading-scale));
+  --text-base: calc(1rem * var(--reading-scale));
+  --text-lg: calc(1.125rem * var(--heading-scale));
+  --text-xl: calc(1.25rem * var(--heading-scale));
+  --text-2xl: calc(1.5rem * var(--heading-scale));
+  --text-3xl: calc(1.875rem * var(--heading-scale));
+  --text-4xl: calc(2.25rem * var(--heading-scale));
+  --text-5xl: calc(3rem * var(--heading-scale));
+
   --font-sans: 'Archivo', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'Menlo', monospace;
 
@@ -207,6 +235,7 @@
   }
 
   body {
+    font-size: calc(1rem * var(--reading-scale));
     background-color: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans);
@@ -522,8 +551,8 @@
 
 /** Micro-etiqueta tecnica: cabeceras de tabla, rotulos de KPI, agrupadores. */
 @utility label-micro {
-  font-size: 0.6875rem;
-  line-height: 1rem;
+  font-size: calc(0.6875rem * var(--reading-scale));
+  line-height: 1.454545;
   font-weight: 600;
   letter-spacing: 0.07em;
   text-transform: uppercase;

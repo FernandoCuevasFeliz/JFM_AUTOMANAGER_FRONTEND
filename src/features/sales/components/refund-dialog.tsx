@@ -204,7 +204,7 @@ export function RefundDialog({
           </FormRow>
 
           {excede && (
-            <p role="alert" className="text-[13px] font-medium text-danger">
+            <p role="alert" className="text-[calc(0.8125rem*var(--reading-scale))] font-medium text-danger">
               No se puede devolver mas de lo cobrado ({formatMoney(disponible, sale.currencyCode)}).
               El limite es lo que entro menos lo ya reembolsado, no el precio de la venta.
             </p>

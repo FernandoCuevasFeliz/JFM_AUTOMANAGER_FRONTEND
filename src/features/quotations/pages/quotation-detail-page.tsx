@@ -189,7 +189,7 @@ export function QuotationDetailPage() {
               */}
               {quotation.status === 'approved' &&
                 (vencida ? (
-                  <p className="rounded-lg border border-warning/30 bg-warning/8 px-3.5 py-3 text-[13px] leading-relaxed">
+                  <p className="rounded-lg border border-warning/30 bg-warning/8 px-3.5 py-3 text-[calc(0.8125rem*var(--reading-scale))] leading-relaxed">
                     Esta cotizacion esta aprobada pero su vigencia termino el{' '}
                     <span className="num">{formatCivilDate(quotation.validUntil)}</span>, asi que ya
                     no se puede convertir en reserva ni en venta. Amplia la vigencia desde{' '}

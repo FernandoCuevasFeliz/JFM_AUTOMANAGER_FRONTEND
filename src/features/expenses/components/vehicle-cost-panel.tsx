@@ -53,7 +53,7 @@ export function VehicleCostPanel({ vehicleId }: { vehicleId: string }) {
             este panel. Se dice, en vez de mostrar un cero silencioso.
           */}
           {cost.purchaseCost === null && (
-            <p className="rounded-lg border border-warning/30 bg-warning/8 px-3.5 py-3 text-[13px] leading-relaxed">
+            <p className="rounded-lg border border-warning/30 bg-warning/8 px-3.5 py-3 text-[calc(0.8125rem*var(--reading-scale))] leading-relaxed">
               Esta unidad no tiene ninguna compra registrada, asi que su costo de importacion no
               esta contabilizado. Lo que ves abajo solo incluye los gastos imputados, y el margen
               saldra inflado hasta que se registre la compra.

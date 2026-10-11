@@ -93,7 +93,7 @@ export function ExpensesListPage() {
           return (
             <Link
               to={`/vehicles/${expense.vehicleId}`}
-              className="font-mono text-[13px] text-primary hover:underline"
+              className="font-mono text-[calc(0.8125rem*var(--reading-scale))] text-primary hover:underline"
               onClick={(event) => event.stopPropagation()}
             >
               {expense.vehicleChassisNumber ?? 'Ver unidad'}

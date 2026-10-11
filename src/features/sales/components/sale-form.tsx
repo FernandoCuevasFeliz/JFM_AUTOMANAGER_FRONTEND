@@ -402,7 +402,7 @@ export function SaleForm() {
               de una persona.
             */}
             {depositoEnOtraMoneda && (
-              <p className="rounded-lg border border-warning/30 bg-warning/8 px-3.5 py-3 text-[13px] leading-relaxed">
+              <p className="rounded-lg border border-warning/30 bg-warning/8 px-3.5 py-3 text-[calc(0.8125rem*var(--reading-scale))] leading-relaxed">
                 La reserva tiene un deposito de{' '}
                 <strong className="num font-semibold">
                   {formatMoney(deposito, REPORTING_CURRENCY)}

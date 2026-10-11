@@ -37,9 +37,9 @@ export function EmptyState({
         <Icon className="relative size-6" />
       </div>
       <div className="flex flex-col gap-1.5">
-        <p className="text-[15px] font-semibold text-foreground">{title}</p>
+        <p className="text-[calc(0.9375rem*var(--reading-scale))] font-semibold text-foreground">{title}</p>
         {description && (
-          <p className="max-w-sm text-[13px] leading-relaxed text-muted-foreground">{description}</p>
+          <p className="max-w-sm text-[calc(0.8125rem*var(--reading-scale))] leading-relaxed text-muted-foreground">{description}</p>
         )}
       </div>
       {action}
@@ -89,8 +89,8 @@ export function ErrorState({
         <AlertCircle className="size-6" />
       </div>
       <div className="flex flex-col gap-1.5">
-        <p className="text-[15px] font-semibold">No se pudo cargar</p>
-        <p className="max-w-md text-[13px] leading-relaxed text-muted-foreground">{message}</p>
+        <p className="text-[calc(0.9375rem*var(--reading-scale))] font-semibold">No se pudo cargar</p>
+        <p className="max-w-md text-[calc(0.8125rem*var(--reading-scale))] leading-relaxed text-muted-foreground">{message}</p>
       </div>
       {onRetry && (
         <Button variant="outline" size="sm" onClick={onRetry}>

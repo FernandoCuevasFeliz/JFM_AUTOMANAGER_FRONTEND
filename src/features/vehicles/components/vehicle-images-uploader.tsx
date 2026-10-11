@@ -214,7 +214,7 @@ export function VehicleImagesUploader({
               {!IMAGEKIT_UPLOAD_ENABLED && (
                 <p className="text-xs text-muted-foreground">
                   La subida directa a ImageKit esta desactivada: falta configurar{' '}
-                  <code className="rounded bg-muted px-1 py-0.5 text-[11px]">
+                  <code className="rounded bg-muted px-1 py-0.5 text-[calc(0.6875rem*var(--reading-scale))]">
                     VITE_IMAGEKIT_AUTH_ENDPOINT
                   </code>
                   . Mientras tanto puedes registrar la URL de una imagen ya alojada.
@@ -267,7 +267,7 @@ export function VehicleImagesUploader({
               </button>
 
               {image.isPrimary && (
-                <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[11px] font-medium text-primary-foreground">
+                <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[calc(0.6875rem*var(--reading-scale))] font-medium text-primary-foreground">
                   <Star className="size-3 fill-current" />
                   Portada
                 </span>

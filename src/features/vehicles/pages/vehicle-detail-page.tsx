@@ -230,7 +230,7 @@ function DetailItem({
       <dd
         className={[
           'text-sm',
-          mono ? 'font-mono text-[13px]' : '',
+          mono ? 'font-mono text-[calc(0.8125rem*var(--reading-scale))]' : '',
           capitalize ? 'capitalize' : '',
         ].join(' ')}
       >

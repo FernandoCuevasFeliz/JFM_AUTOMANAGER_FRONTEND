@@ -221,7 +221,7 @@ export function EditItemPriceDialog({
           </FormField>
 
           {porDebajo && (
-            <p role="alert" className="text-[13px] font-medium text-danger">
+            <p role="alert" className="text-[calc(0.8125rem*var(--reading-scale))] font-medium text-danger">
               El total quedaria por debajo de lo cobrado y el servidor lo rechazara. Registra antes
               un reembolso si el cliente recibio dinero de vuelta.
             </p>
@@ -296,7 +296,7 @@ export function ReturnItemDialog({
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
           {esUltima && (
-            <p className="rounded-lg border border-warning/30 bg-warning/8 px-3.5 py-2.5 text-[13px] leading-relaxed">
+            <p className="rounded-lg border border-warning/30 bg-warning/8 px-3.5 py-2.5 text-[calc(0.8125rem*var(--reading-scale))] leading-relaxed">
               Es la <strong>ultima unidad vigente</strong> de la venta. Al devolverla, el total
               quedara en cero pero la venta seguira existiendo. Si lo que quieres es deshacer la
               operacion entera, cancela la venta.

@@ -263,7 +263,7 @@ function RelatedCard({
       }
     >
       {rows.length === 0 ? (
-        <p className="text-[13px] text-muted-foreground">Sin registros.</p>
+        <p className="text-[calc(0.8125rem*var(--reading-scale))] text-muted-foreground">Sin registros.</p>
       ) : (
         <ul className="flex flex-col divide-y divide-border">{rows}</ul>
       )}

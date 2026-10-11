@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 const badgeVariants = cva(
   [
     'inline-flex items-center gap-1.5 rounded-sm border px-2 py-0.5',
-    'text-[11px] font-semibold uppercase tracking-[0.04em] whitespace-nowrap',
+    'text-[calc(0.6875rem*var(--reading-scale))] font-semibold uppercase tracking-[0.04em] whitespace-nowrap',
     'transition-colors',
   ],
   {

@@ -31,6 +31,17 @@
           document.documentElement.dataset.theme = 'light';
         }
       })();
+      // Restaura el tamaño de lectura antes de mostrar la interfaz.
+      (function () {
+        var size = 'normal';
+        try {
+          var savedSize = localStorage.getItem('jfm-font-size');
+          if (savedSize === 'large' || savedSize === 'extra-large') size = savedSize;
+        } catch (error) {
+          // Sin almacenamiento, se conserva el tamaño normal.
+        }
+        document.documentElement.dataset.fontSize = size;
+      })();
     </script>
   </head>
   <body>

@@ -259,7 +259,7 @@ export function SaleDetailPage() {
                           {refund.vehicleChassisNumber ?? 'General'}
                         </TableCell>
                         <TableCell className="max-w-xs">
-                          <span className="line-clamp-2 text-[13px]">{refund.reason}</span>
+                          <span className="line-clamp-2 text-[calc(0.8125rem*var(--reading-scale))]">{refund.reason}</span>
                         </TableCell>
                         <TableCell className="num text-right font-medium text-warning">
                           − {formatMoney(refund.amount, refund.currencyCode)}
@@ -270,7 +270,7 @@ export function SaleDetailPage() {
                 </Table>
 
                 <div className="flex items-center justify-between border-t border-border px-5 pt-3">
-                  <span className="text-[13px] font-medium">Neto retenido</span>
+                  <span className="text-[calc(0.8125rem*var(--reading-scale))] font-medium">Neto retenido</span>
                   <span className="num text-sm font-semibold">
                     {formatMoney(sale.netPaid, sale.currencyCode)}
                   </span>

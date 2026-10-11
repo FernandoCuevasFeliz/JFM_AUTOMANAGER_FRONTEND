@@ -20,7 +20,7 @@ export const CHART_TOOLTIP_STYLE = {
   borderRadius: 10,
   boxShadow:
     '0 10px 30px -8px oklch(0.21 0.04 265 / 0.18), 0 2px 8px -2px oklch(0.21 0.04 265 / 0.08)',
-  fontSize: 13,
+  fontSize: 'calc(0.8125rem * var(--reading-scale))',
   padding: '8px 10px',
 } as const;
 
@@ -29,9 +29,9 @@ export const CHART_TOOLTIP_STYLE = {
 export const CHART_TOOLTIP_LABEL_STYLE = { color: 'var(--popover-foreground)' } as const;
 export const CHART_TOOLTIP_ITEM_STYLE = { color: 'var(--popover-foreground)' } as const;
 
-export const CHART_AXIS_TICK = { fontSize: 11, fill: 'var(--muted-foreground)' } as const;
+export const CHART_AXIS_TICK = { fontSize: 'calc(0.6875rem * var(--reading-scale))', fill: 'var(--muted-foreground)' } as const;
 
-export const CHART_LEGEND_STYLE = { fontSize: 12, paddingTop: 8 } as const;
+export const CHART_LEGEND_STYLE = { fontSize: 'calc(0.75rem * var(--reading-scale))', paddingTop: 8 } as const;
 
 /** Los mismos estilos, encogidos para la hoja. */
 const PRINT_AXIS_TICK = { fontSize: 8, fill: 'var(--muted-foreground)' } as const;
